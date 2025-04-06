@@ -12,4 +12,4 @@ Schistosomiasis, a neglected tropical parasitic disease, is prevalent in Africa,
 - Each arm received one of three treatment options (SBT, CWT, or no treatment) annually from the first to the fourth year
 
 ## The Goal of this study
-For space-time dependent cluster randomized trials, our goal is to achieve accurate and efficient estimatiion for direct and indirect treatment effects, aiming at helping program managers discern the differences between these treatment options.
+For space-time dependent cluster randomized trials, our goal is to achieve accurate and efficient estimation for direct and indirect treatment effects, aiming at helping program managers discern the differences between these treatment options.
