@@ -1,5 +1,5 @@
 
-# Estimating Direct and Indirect Treatment Effects in Space-Time Dependent CRTs
+# Estimating Direct and Indirect Treatment Effects in Spacetime-Dependent CRTs
 
 This Github page provides code and data for reproducing the results in the manuscript:``Estimating Direct and Indirect Treatment Effects and Ranking Treatment Regimens in Spacetime Dependent Cluster Randomized Trials: A Schistosomiasis Case Study'' by Y. Chen, X. Wen, F. Luo, Y. Yang, and Y. Shen. 
 
