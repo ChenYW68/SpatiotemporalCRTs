@@ -20,7 +20,18 @@ Figure 1 shows Ranking results of treatment regimens based on two methods: (1) t
   <img src="./figure/Fig4_Ranks.jpg" width="90%" height="70%">
     </p>
   <figcaption>
-  <strong>Figure 4:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
+  <strong>Figure 1:</strong> Ranking treatment strategies for six arms. Left panel: Average Treatment Effect (ATE) calculated as the sum of Direct Effects (DEs) and Indirect Effects (IEs) from the proposed JSTVC. Right panel: Average relative reduction of observed outcomes from Year 1 to Year 5.
+  </figcaption>
+</figure>
+
+## Differences in ATEs between different treatment regimens
+Figure 2(a) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95\% CI of $\mathcal{DI}_{1, 4}$ includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years $-$ for example, arm 4 with $\widetilde{\mathcal{T}}_{4, 4} = $ (SBT, SBT, SBT, SBT)$^T$ shows significantly greater efficacy than arm 6 with $\widetilde{\mathcal{T}}_{6, 4} = $ (SBT, No, SBT, No)$^T$, with $\mathcal{DI}_{4, 6}$ being significantly less than zero (Figure 2(b)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions $-$ for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with $\widetilde{\mathcal{T}}_{5, 4} = $ (SBT, SBT, No, No)$^T$, with $\mathcal{DI}_{5,6}$ significantly greater than zero (Figure 2(c)).
+<figure id="Figure4">
+  <p align="center">
+  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="90%" height="70%">
+    </p>
+  <figcaption>
+  <strong>Figure 2:</strong> Posterior distributions of differences $\mathcal{DI}$ in Average Treatment Effects (ATEs) between arms are computed using JSTVC based on (\ref{cumulative_effects_ate}), with 95\% credible intervals (CIs) highlighted by shaded areas.
   </figcaption>
 </figure>
 
