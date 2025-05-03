@@ -13,35 +13,37 @@ Schistosomiasis, a neglected tropical parasitic disease, is prevalent in Africa,
 ## Our methodology
 Motivated by the need to identify optimal treatment regimens in the Schistosomiasis Consortium for Operational Research and Evaluation CRT, this study addresses two major methodological challenges in estimating treatment effects: (1) substantial bias arising from Indirect Effects (IEs) and time-varying Direct Effects (DEs) and (2) large variance due to unaccounted spatiotemporal dependencies. We identify optimal treatment regimens by evaluating differences through two components: DEs from the most recent treatment and IEs from historical treatment trajectories. To efficiently estimate DEs and IEs, we develop a Joint Spatiotemporal Varying Coefficient (JSTVC) model. JSTVC accounts for spatiotemporal dependencies and regional heterogeneities, while also capturing spatial anisotropic patterns associated with schistosomiasis transmission. To support scalable inference under complex dependent structures, we extend a hybrid computational method that integrates Variational Bayes with ensemble-based techniques, which can be available in the R file. The proposed methodology provides a broadly applicable framework for modeling complex dependencies in randomized experiments, especially in those involving multiple sequential interventions.
 
-## Ranking treatment regimens
-Figure 1 shows Ranking results of treatment regimens based on two methods: (1) the average relative reduction in prevalence from Year 1 to Year 5 across villages within each arm and (2)  the ATE-based method from the proposed JSTVC. Our ranking results suggest that: (i) administering treatment every year generally outperforms strategies that miss treatments in some years and (ii) when treatment assignment interruptions are unavoidable, intermittent interruptions are more effective than consecutive interruptions.
-<figure id="Figure4">
-  <p align="center">
-  <img src="./figure/Fig4_Ranks.jpg" width="60%" height="40%">
-    </p>
-  <figcaption>
-  <strong>Figure 1:</strong> Ranking treatment strategies for six arms. Left panel: Average Treatment Effect (ATE) calculated as the sum of Direct Effects (DEs) and Indirect Effects (IEs) from the proposed JSTVC. Right panel: Average relative reduction of observed outcomes from Year 1 to Year 5.
-  </figcaption>
-</figure>
-
-## Differences in ATEs between different treatment regimens
-Figure 2(c) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95% CI of the difference includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years - for example, arm 4 with Treatment = (SBT, SBT, SBT, SBT) shows significantly greater efficacy than arm 6 with Treatment = (SBT, No, SBT, No), with $DI_{4, 6}$ being significantly less than zero (Figure 2(o)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions - for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with Treatment = (SBT, SBT, No, No), with $DI_{5,6}$ significantly greater than zero (Figure 2(p)).
-<figure id="Figure4">
-  <p align="center">
-  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="60%" height="40%">
-    </p>
-  <figcaption>
-  <strong>Figure 2:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
-  </figcaption>
-</figure>
-
 ## Spatiotemporal patterns of schistosomiasis
-Figure 3 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
+Figure 1 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
 <figure id="Figure4">
   <p align="center">
   <img src="./figure/Fig6_Kenya_Wts.jpg" width="90%" height="70%">
     </p>
   <figcaption>
-  <strong>Figure 3:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
+  <strong>Figure 1:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
   </figcaption>
 </figure>
+
+## Ranking treatment regimens
+Figure 2 shows Ranking results of treatment regimens based on two methods: (1) the average relative reduction in prevalence from Year 1 to Year 5 across villages within each arm and (2)  the ATE-based method from the proposed JSTVC. Our ranking results suggest that: (i) administering treatment every year generally outperforms strategies that miss treatments in some years and (ii) when treatment assignment interruptions are unavoidable, intermittent interruptions are more effective than consecutive interruptions.
+<figure id="Figure4">
+  <p align="center">
+  <img src="./figure/Fig4_Ranks.jpg" width="60%" height="40%">
+    </p>
+  <figcaption>
+  <strong>Figure 2:</strong> Ranking treatment strategies for six arms. Left panel: Average Treatment Effect (ATE) calculated as the sum of Direct Effects (DEs) and Indirect Effects (IEs) from the proposed JSTVC. Right panel: Average relative reduction of observed outcomes from Year 1 to Year 5.
+  </figcaption>
+</figure>
+
+## Differences in ATEs between different treatment regimens
+Figure 3(c) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95% CI of the difference includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years - for example, arm 4 with Treatment = (SBT, SBT, SBT, SBT) shows significantly greater efficacy than arm 6 with Treatment = (SBT, No, SBT, No), with $DI_{4, 6}$ being significantly less than zero (Figure 3(o)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions - for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with Treatment = (SBT, SBT, No, No), with $DI_{5,6}$ significantly greater than zero (Figure 3(p)).
+<figure id="Figure4">
+  <p align="center">
+  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="60%" height="40%">
+    </p>
+  <figcaption>
+  <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
+  </figcaption>
+</figure>
+
+
