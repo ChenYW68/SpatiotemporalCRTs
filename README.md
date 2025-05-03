@@ -25,7 +25,7 @@ Figure 1 shows Ranking results of treatment regimens based on two methods: (1) t
 </figure>
 
 ## Differences in ATEs between different treatment regimens
-Figure 2(a) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95\% CI of the difference includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years - for example, arm 4 with Treatment = (SBT, SBT, SBT, SBT) shows significantly greater efficacy than arm 6 with Treatment = (SBT, No, SBT, No), with $DI_{4, 6}$ being significantly less than zero (Figure 2(b)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions - for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with Treatment = (SBT, SBT, No, No), with $DI_{5,6}$ significantly greater than zero (Figure 2(c)).
+Figure 2(c) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95% CI of the difference includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years - for example, arm 4 with Treatment = (SBT, SBT, SBT, SBT) shows significantly greater efficacy than arm 6 with Treatment = (SBT, No, SBT, No), with $DI_{4, 6}$ being significantly less than zero (Figure 2(o)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions - for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with Treatment = (SBT, SBT, No, No), with $DI_{5,6}$ significantly greater than zero (Figure 2(p)).
 <figure id="Figure4">
   <p align="center">
   <img src="./figure/FigS7_Dist_ATE_all.jpg" width="60%" height="40%">
@@ -42,6 +42,6 @@ Figure 3 illustrates the influence of treatment effects and spatiotemporal rando
   <img src="./figure/Fig6_Kenya_Wts.jpg" width="90%" height="70%">
     </p>
   <figcaption>
-  <strong>Figure 4:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
+  <strong>Figure 3:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
   </figcaption>
 </figure>
