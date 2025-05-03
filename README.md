@@ -25,13 +25,13 @@ Figure 1 shows Ranking results of treatment regimens based on two methods: (1) t
 </figure>
 
 ## Differences in ATEs between different treatment regimens
-Figure 2(a) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95\% CI of $\mathcal{DI}_{1, 4}$ includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years $-$ for example, arm 4 with $\widetilde{\mathcal{T}}_{4, 4} = $ (SBT, SBT, SBT, SBT)$^T$ shows significantly greater efficacy than arm 6 with $\widetilde{\mathcal{T}}_{6, 4} = $ (SBT, No, SBT, No)$^T$, with $\mathcal{DI}_{4, 6}$ being significantly less than zero (Figure 2(b)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions $-$ for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with $\widetilde{\mathcal{T}}_{5, 4} = $ (SBT, SBT, No, No)$^T$, with $\mathcal{DI}_{5,6}$ significantly greater than zero (Figure 2(c)).
+Figure 2(a) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95\% CI of the difference includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years - for example, arm 4 with Treatment = (SBT, SBT, SBT, SBT) shows significantly greater efficacy than arm 6 with Treatment = (SBT, No, SBT, No), with $DI_{4, 6}$ being significantly less than zero (Figure 2(b)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions - for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with Treatment = (SBT, SBT, No, No), with $DI_{5,6}$ significantly greater than zero (Figure 2(c)).
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="90%" height="70%">
+  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="60%" height="40%">
     </p>
   <figcaption>
-  <strong>Figure 2:</strong> Posterior distributions of differences \(DI\) in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
+  <strong>Figure 2:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
   </figcaption>
 </figure>
 
