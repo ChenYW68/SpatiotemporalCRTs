@@ -42,7 +42,7 @@ Figure 3(c) shows that continuously applying CWT or SBT over four years (arms 1 
   <img src="./figure/FigS7_Dist_ATE_all.jpg" width="60%" height="40%">
     </p>
   <figcaption>
-  <strong>Figure 3:</strong> Posterior distributions of differences $DI$ in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
+  <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
   </figcaption>
 </figure>
 
