@@ -17,7 +17,7 @@ Motivated by the need to identify optimal treatment regimens in the Schistosomia
 Figure 1 shows Ranking results of treatment regimens based on two methods: (1) the average relative reduction in prevalence from Year 1 to Year 5 across villages within each arm and (2)  the ATE-based method from the proposed JSTVC. Our ranking results suggest that: (i) administering treatment every year generally outperforms strategies that miss treatments in some years and (ii) when treatment assignment interruptions are unavoidable, intermittent interruptions are more effective than consecutive interruptions.
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/Fig4_Ranks.jpg" width="90%" height="70%">
+  <img src="./figure/Fig4_Ranks.jpg" width="60%" height="40%">
     </p>
   <figcaption>
   <strong>Figure 1:</strong> Ranking treatment strategies for six arms. Left panel: Average Treatment Effect (ATE) calculated as the sum of Direct Effects (DEs) and Indirect Effects (IEs) from the proposed JSTVC. Right panel: Average relative reduction of observed outcomes from Year 1 to Year 5.
