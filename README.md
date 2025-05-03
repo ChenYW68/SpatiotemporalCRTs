@@ -3,7 +3,7 @@
 
 This Github page provides code and data for reproducing the results in the manuscript:``Estimating Direct and Indirect Treatment Effects and Ranking Treatment Regimens in Spacetime Dependent Cluster Randomized Trials: A Schistosomiasis Case Study'' by Y. Chen, X. Wen, F. Luo, Y. Yang, and Y. Shen. 
 
-## Datasets of Schistosomiasis from the SCORE Project
+## Datasets of schistosomiasis from the SCORE project
 Schistosomiasis, a neglected tropical parasitic disease, is prevalent in Africa, South America, and Asia − especially in rural areas with poor socioeconomic conditions (Hong et al., 2022) − with cases reported in more than 70 countries (World Health Organization, 2022).  In 2021 alone, at least 251 million people required preventive treatment (World Health Organization, 2023). Global efforts to control morbidity have primarily focused on preventive chemotherapy using praziquantel (PZQ), typically delivered through Mass Drug Administration (MDA) via School-Based Treatment (SBT) or Community-Wide Treatment (CWT). To systematically evaluate and compare the two treatment strategies, the Schistosomiasis Consortium for Operational Research and Evaluation (SCORE; \citet{SCORE}) conducted a five-year cluster randomized trial (CRT) across multiple countries. This data can be downloaded via [SCORE](https://clinepidb.org/ce/app/workspace/analyses/DS_d6a1141fbf/new). Data description is as follows:
 - We analyze infection prevalence data for Schistosoma mansoni from 149 villages in Kenya and 149 villages in Tanzania, covering a wide age range from 5 to 77 years.
 - These infection data, collected on a yearly scale, were obtained through the SCORE project over a 5-year period
