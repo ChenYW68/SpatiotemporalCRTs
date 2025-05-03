@@ -25,7 +25,7 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
 </figure>
 
 ## Ranking treatment regimens
-Figure 2 shows Ranking results of treatment regimens based on two methods: (1) the average relative reduction in prevalence from Year 1 to Year 5 across villages within each arm and (2)  the ATE-based method from the proposed JSTVC. Our ranking results suggest that: (i) administering treatment every year generally outperforms strategies that miss treatments in some years and (ii) when treatment assignment interruptions are unavoidable, intermittent interruptions are more effective than consecutive interruptions.
+Figure 2 shows ranking results of treatment regimens based on two methods: (1) the average relative reduction in prevalence from Year 1 to Year 5 across villages within each arm and (2)  the ATE-based method from the proposed JSTVC. Our ranking results suggest that: (i) administering treatment every year generally outperforms strategies that miss treatments in some years and (ii) when treatment assignment interruptions are unavoidable, intermittent interruptions are more effective than consecutive interruptions.
 <figure id="Figure4">
   <p align="center">
   <img src="./figure/Fig4_Ranks.jpg" width="70%" height="50%">
