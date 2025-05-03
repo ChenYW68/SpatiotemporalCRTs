@@ -12,3 +12,16 @@ Schistosomiasis, a neglected tropical parasitic disease, is prevalent in Africa,
 
 ## Our methodology
 Motivated by the need to identify optimal treatment regimens in the Schistosomiasis Consortium for Operational Research and Evaluation CRT, this study addresses two major methodological challenges in estimating treatment effects: (1) substantial bias arising from Indirect Effects (IEs) and time-varying Direct Effects (DEs) and (2) large variance due to unaccounted spatiotemporal dependencies. We identify optimal treatment regimens by evaluating differences through two components: DEs from the most recent treatment and IEs from historical treatment trajectories. To efficiently estimate DEs and IEs, we develop a Joint Spatiotemporal Varying Coefficient (JSTVC) model. JSTVC accounts for spatiotemporal dependencies and regional heterogeneities, while also capturing spatial anisotropic patterns associated with schistosomiasis transmission. To support scalable inference under complex dependent structures, we extend a hybrid computational method that integrates Variational Bayes with ensemble-based techniques, which can be available in the R file. The proposed methodology provides a broadly applicable framework for modeling complex dependencies in randomized experiments, especially in those involving multiple sequential interventions.
+
+
+
+## Spatiotemporal patterns of schistosomiasis
+Figure 4 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
+<figure id="Figure4">
+  <p align="center">
+  <img src="./figure/Fig6_Kenya_Wts.jpg" width="90%" height="70%">
+    </p>
+  <figcaption>
+  <strong>Figure 4:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
+  </figcaption>
+</figure>
