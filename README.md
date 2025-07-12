@@ -20,7 +20,7 @@ To support scalable inference under complex dependent structures, we extend a hy
 Figure 1 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/Fig6_Kenya_Wts.jpg" width="500px">
+  <img src="./figure/Fig6_Kenya_Wts.jpg" width="1000px">
     </p>
   <figcaption>
   <strong>Figure 1:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
@@ -31,7 +31,7 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
 Figure 2 shows ranking results of treatment regimens based on two methods: (1) the average relative reduction in prevalence from Year 1 to Year 5 across villages within each arm and (2) the ATE-based method from the proposed JSTVC. Our ranking results suggest that: (i) administering treatment every year generally outperforms strategies that miss treatments in some years and (ii) when treatment assignment interruptions are unavoidable, intermittent interruptions are more effective than consecutive interruptions.
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/FigS6_Ranks.jpg" width="500px">
+  <img src="./figure/FigS6_Ranks.jpg" width="1000px">
     </p>
   <figcaption>
   <strong>Figure 2:</strong> Ranking treatment strategies for six arms in Tanzania. Left panel: Average Treatment Effect (ATE) calculated as the sum of Direct Effects (DEs) and Indirect Effects (IEs) from the proposed JSTVC. Right panel: Average relative reduction of observed outcomes from Year 1 to Year 5.
@@ -42,7 +42,7 @@ Figure 2 shows ranking results of treatment regimens based on two methods: (1) t
 Figure 3(c) shows that continuously applying CWT or SBT over four years (arms 1 and 4) does not produce a statistically significant difference, as the 95% CI of the difference includes zero. Significant differences are observed in the following scenarios: (i) when comparing a continuously applied treatment with an interrupted regimen in certain years - for example, arm 4 with Treatment = (SBT, SBT, SBT, SBT) shows significantly greater efficacy than arm 6 with Treatment = (SBT, No, SBT, No), with $DI_{4, 6}$ being significantly less than zero (Figure 3(o)); and (ii) when comparing consecutive interruptions of CWT or SBT with intermittent interruptions - for instance, arm 6 demonstrates significantly greater efficacy than arm 5 with Treatment = (SBT, SBT, No, No), with $DI_{5,6}$ significantly greater than zero (Figure 3(p)).
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="500px">
+  <img src="./figure/FigS7_Dist_ATE_all.jpg" width="1000px">
     </p>
   <figcaption>
   <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas.
