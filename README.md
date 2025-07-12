@@ -20,7 +20,7 @@ To support scalable inference under complex dependent structures, we extend a hy
 Figure 1 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/Fig6_Kenya_Wts.jpg" width="40%" height="10%">
+  <img src="./figure/Fig6_Kenya_Wts.jpg" width="100%" height="100%">
     </p>
   <figcaption>
   <strong>Figure 1:</strong> Spatiotemporal patterns of schistosomiasis prevalence (all results obtained under double logarithmic scale). Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects (including intercept term).
