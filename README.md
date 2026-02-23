@@ -1,5 +1,5 @@
 
-# Estimating Direct and Indirect Treatment Effects in Spacetime-Dependent CRTs
+# Identifying Optimal Schistosomiasis Treatment Sequences for Mass Drug Administration Using Direct and Indirect Effects in Spatiotemporal Trials
 
 This Github page provides code and data for reproducing the results in the manuscript:``Identifying Optimal Schistosomiasis Treatment Sequences for Mass Drug Administration Using Direct and Indirect Effects in Spatiotemporal Trials'' by Y. Chen, X. Wen, F. Luo, Y. Yang, and Y. Shen. 
 
