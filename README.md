@@ -20,7 +20,7 @@ To support scalable inference under complex dependent structures, we develop a s
 Figure 1 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/Fig7_Kenya_Wts.jpg" width="600px">
+  <img src="./figure/Fig7_Kenya_Wts.jpg" width="800px">
     </p>
   <figcaption>
   <strong>Figure 1:</strong> Recovered spatiotemporal patterns of the different components. Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects.
@@ -30,7 +30,7 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
 ## Ranking treatment regimens
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/Fig4_Ranks.jpg" width="500px">
+  <img src="./figure/Fig4_Ranks.jpg" width="800px">
     </p>
   <figcaption>
   <strong>Figure 2:</strong> Ranking treatment sequences across methods: (A) The proposed JSTVC; (B) JSTVC without the spatiotemporal random effect;  (C) JSTVC which mixed DEs and IEs and did not decompose the ATE; and (D) Ranking based on the average
@@ -41,7 +41,7 @@ reduction in outcomes from Year 1 to Year 5.
 ## Differences in ATEs between different treatment regimens
 <figure id="Figure4">
   <p align="center">
-  <img src="./figure/Fig3_Dist_ATE_all.jpg" width="600px">
+  <img src="./figure/Fig3_Dist_ATE_all.jpg" width="800px">
     </p>
   <figcaption>
   <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas, where results from the VB implementation are compared with those obtained via MCMC.
