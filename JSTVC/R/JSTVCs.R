@@ -4,32 +4,26 @@ JSTVC <- function(Fixed.effect.Data,
                  scale.y         = FALSE,
                  Object          = "ALL",
                  Obj.Seq         = 1,
-                 Tab             = "JSTVC",
                  CV              = TRUE,
                  prior           = NULL,
                  Para.List       = NULL,
                  true.Para.List  = NULL,
-                 Database        = list(DSN         = RODBC::odbcConnect("DSN_01", uid = "myname",
-                                       pwd          = "mypwd",
-                                       believeNRows = FALSE,
-                                       case         = "toupper")),
                  verbose         = TRUE,
-                 verbose.VB      = FALSE,
+                 verbose.VB      = TRUE,
                  transf.Response = c("normal"),
-                 save.Predict    = F,
+                 save.Predict    = TRUE,
                  Ne              = 100,
-                 cs              = 0.5,
-                 ct              = 1,
+                 cs              = 1e15,
+                 ct              = 0,
                  n.cores         = 1,
                  itMin           = 10,
                  itMax           = 50,
                  tol.real        = 0.001,
                  seed            = 1234,
                  plot            = TRUE,
-                 nu              = c(1e-1, 1e-1),
-                 var.select      = FALSE,
                  positive        = TRUE,
-                 threshold       = c(0.5, 0.5))
+                 MCMC            = FALSE,
+                 threshold = c(0.5, 0.5))
 {
   call <- match.call()
 
@@ -46,34 +40,35 @@ JSTVC <- function(Fixed.effect.Data,
 
 
 
-  Px <- Pg <- Pz <- Pr <- sPx <- sPz <- sPg <- sPr <- vector()
-  Px[1] <- Pz[1] <- Pr[1] <- Pg[1] <- 0
+  Px <- Pg <- Pr <- sPg <- sPr <- vector()
+  Px[1] <- Pr[1] <- Pg[1] <- 0
   for(py in 1:Py){
     Px[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$X_ts), 0,
                      dim(Fixed.effect.Data[[py]]$X_ts)[1])
-    Pz[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$Z_ts), 0,
-                     dim(Fixed.effect.Data[[py]]$Z_ts)[1])
+
     Pr[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$R_ts), 0,
                      dim(Fixed.effect.Data[[py]]$R_ts)[1])
     Pg[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$G_ts), 0,
                      dim(Fixed.effect.Data[[py]]$G_ts)[1])
   }
-  Px <- max(Px); Pz <- max(Pz); Pr <- max(Pr); Pg <- max(Pg)
+  Px <- max(Px); Pr <- max(Pr); Pg <- max(Pg)
 
-  sPx[1] <- sPz[1] <- sPg[1] <- sPr[1] <- 0
+  sPg[1] <- sPr[1] <- 0
   for(py in 1:Py){
-    sPx[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$sX_ts), 0,
-                      dim(Fixed.effect.Data[[py]]$sX_ts)[1])
-    sPz[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$sZ_ts), 0,
-                      dim(Fixed.effect.Data[[py]]$sZ_ts)[1])
+
     sPg[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$sG_ts), 0,
                       dim(Fixed.effect.Data[[py]]$sG_ts)[1])
     sPr[py] <- ifelse(is.null(Fixed.effect.Data[[py]]$sR_ts), 0,
                       dim(Fixed.effect.Data[[py]]$sR_ts)[1])
   }
 
+
+
+
   Phi.v.min.max <- rep(NA, 2)
   Phi.v <- rep(NA, 3)
+
+
 
   if(Pr > 0){
     for(py in 1:Py){
@@ -117,25 +112,15 @@ JSTVC <- function(Fixed.effect.Data,
       Para.List[[names(Fixed.effect.Data)[[py]]]]$st.sRF[["Initial"]] <- prior[[names(Fixed.effect.Data)[[py]]]]$st.sRF[["Initial"]] <- NULL
     }
   }
-
   for(py in 1:Py){
     if(is.null(Para.List[[names(Fixed.effect.Data)[[py]]]]$beta$mu.beta)){
       Para.List[[names(Fixed.effect.Data)[[py]]]]$beta$mu.beta <- matrix(NA, nrow = Px, ncol = 1)
-      rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$beta$mu.beta) <- dimnames(Fixed.effect.Data[[py]]$X_ts)[[1]]
+    }else{
+      Para.List[[names(Fixed.effect.Data)[[py]]]]$beta$mu.beta <- matrix(Para.List[[names(Fixed.effect.Data)[[py]]]]$beta$mu.beta, ncol = 1)
     }
-    if(is.null(Para.List[[names(Fixed.effect.Data)[[py]]]]$sbeta$mu.beta)){
-      Para.List[[names(Fixed.effect.Data)[[py]]]]$sbeta$mu.beta <- matrix(NA, nrow = sPx[py], ncol = 1)
-      rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$sbeta$mu.beta) <- dimnames(Fixed.effect.Data[[py]]$sX_ts)[[1]]
-    }
+    rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$beta$mu.beta) <- dimnames(Fixed.effect.Data[[py]]$X_ts)[[1]]
 
 
-    rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$rho.alpha$mu.rho.alpha) <- rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$alpha.tau.sq$mu.alpha.tau.sq) <-
-    rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$ini.alpha$mu.ini.alpha) <- rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$ini.alpha.tau.sq$mu.ini.alpha.tau.sq) <-
-    c(dimnames(Fixed.effect.Data[[py]]$Z_ts)[[1]])
-
-    rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$self.rho.alpha$mu.rho.alpha) <- rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$self.alpha.tau.sq$mu.alpha.tau.sq) <-
-    rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$self.ini.alpha$mu.ini.alpha) <- rownames(Para.List[[names(Fixed.effect.Data)[[py]]]]$self.ini.alpha.tau.sq$mu.ini.alpha.tau.sq) <-
-    c(dimnames(Fixed.effect.Data[[py]]$sZ_ts)[[1]])
 
   }
 
@@ -158,10 +143,7 @@ JSTVC <- function(Fixed.effect.Data,
         ini.Miss_ts             = ini.Miss_ts,
         X_ts                    = Fixed.effect.Data[[py]]$X_ts,
         R_ts                    = Fixed.effect.Data[[py]]$R_ts,
-        Z_ts                    = Fixed.effect.Data[[py]]$Z_ts,
         G_ts                    = Fixed.effect.Data[[py]]$G_ts,
-        sX_ts                   =  Fixed.effect.Data[[py]]$sX_ts,
-        sZ_ts                   =  Fixed.effect.Data[[py]]$sZ_ts,
         sG_ts                   =  Fixed.effect.Data[[py]]$sG_ts,
         spCoordinates           = unique(G.basic.data[[py]]$Pred.coords),
         Hs                      = spam::as.spam(as.matrix(G.basic.data[[py]]$Grid.infor$Hs)),
@@ -173,11 +155,8 @@ JSTVC <- function(Fixed.effect.Data,
         nPy                     = py,
         Px                      = ifelse(!is.null(Fixed.effect.Data[[py]]$X_ts),  dim(Fixed.effect.Data[[py]]$X_ts)[[1]], 0),
         Pr                      = ifelse(!is.null(Fixed.effect.Data[[py]]$R_ts), dim(Fixed.effect.Data[[py]]$R_ts)[[1]], 0),
-        Pz                      = ifelse(!is.null(Fixed.effect.Data[[py]]$Z_ts), dim(Fixed.effect.Data[[py]]$Z_ts)[[1]], 0),
         Pg                      = ifelse(!is.null(Fixed.effect.Data[[py]]$G_ts), dim(Fixed.effect.Data[[py]]$G_ts)[[1]], 0),
-        sPx                     = ifelse(!is.null(Fixed.effect.Data[[py]]$sX_ts), dim(Fixed.effect.Data[[py]]$sX_ts)[[1]], 0),
         sPr                     = ifelse(!is.null(Fixed.effect.Data[[py]]$sR_ts), dim(Fixed.effect.Data[[py]]$sR_ts)[[1]], 0),
-        sPz                     = ifelse(!is.null(Fixed.effect.Data[[py]]$sZ_ts), dim(Fixed.effect.Data[[py]]$sZ_ts)[[1]], 0),
         sPg                     = ifelse(!is.null(Fixed.effect.Data[[py]]$sG_ts), dim(Fixed.effect.Data[[py]]$sG_ts)[[1]], 0),
         index.y                 = index.y,
         nKnots                  = sum(G.basic.data[[py]]$Grid.infor$summary$Knots.count),
@@ -186,28 +165,15 @@ JSTVC <- function(Fixed.effect.Data,
         Ch                      = G.basic.data[[py]]$Ch,
         Sub.Varying.Ch          = G.basic.data[[py]]$Sub.Varying.Ch)
     }
-    names(data) <- names(Fixed.effect.Data)
-
-    Tab_Name <- paste0(Tab, "_", if_else(month(Sys.Date()) >
-                                           9, as.character(month(Sys.Date())), paste0("0",
-                                            as.character(month(Sys.Date())))), "_", if_else(day(Sys.Date()) >
-                                                                                                                                        9, as.character(day(Sys.Date())), paste0("0",
-                                                                                                                                                                                 as.character(day(Sys.Date())))))
-    if ((!is.null(Database)) & (!is.null(Database$DSN))) {
-      sqlDrop(Database$DSN, paste0(Tab_Name), errors = F)
-      Database$Table = Tab_Name
-    }else {
-      Database = list(DSN = NULL, Table = Tab_Name)
-    }
+      names(data) <- names(Fixed.effect.Data)
       cat("Oject(dataset): All data are used to fit JSTVCs ...\n")
-      CV.Re <- .VB.augEnKS(data            = data,
+      CV.Re <- .VB.EnKF(data            = data,
                              test            = NULL,
                              prior           = prior,
                              Para.List       = Para.List,
                              true.Para.List  = NULL,
                              center.y        = center.y,
                              scale.y         = scale.y,
-                             Database        = Database,
                              Object          = "ALL",
                              save.Predict    = save.Predict,
                              verbose         = verbose,
@@ -222,12 +188,9 @@ JSTVC <- function(Fixed.effect.Data,
                              seed            = seed,
                              tol.real        = tol.real,
                              plot            = plot,
-                             nu              = nu,
-                             var.select      = var.select,
                              positive        = positive,
-                             threshold               = threshold)
-    CV.Re$Tuning.parameter$ch = G.basic.data$ch
-    CV.Re$Call = call
+                             MCMC            = MCMC)
+    CV.Re$Call   <- call
     class(CV.Re) <- "JSTVCs"
   }else {
     CV.Re <- list()
@@ -235,47 +198,32 @@ JSTVC <- function(Fixed.effect.Data,
       cat("....\n")
       GSD <- Partitioning.Dataset(G.basic.data,
                                   Fixed.effect.Data = Fixed.effect.Data,
-                                  Object = Object, num = num,
+                                  Object = Object,
+                                  num = num,
                                   siteid = Fixed.effect.Data[[1]]$siteid)
-      Tab_Name <- paste0(Tab, "_", 
-                         if_else(day(Sys.Date()) > 9, as.character(day(Sys.Date())),
-                                 paste0("0", as.character(day(Sys.Date())))),
-                         "_", GSD$Object)
-      if ((!is.null(Database)) & (!is.null(Database$DSN))) {
-        sqlDrop(Database$DSN, paste0(Tab_Name), errors = F)
-        Database$Table = Tab_Name
-      }else {
-        Database = list(DSN = NULL, Table = Tab_Name)
-      }
-
-      R <- .VB.augEnKS(data            = GSD$train,
-                         test            = GSD$test,
-                         prior           = prior,
-                         Para.List       = Para.List,
-                         true.Para.List  = NULL,
-                         center.y        = center.y,
-                         scale.y         = scale.y,
-                         Database        = Database,
-                         Object          = GSD$Object,
-                         verbose         = verbose,
-                         verbose.VB      = verbose.VB,
-                         transf.Response = transf.Response,
-                         Ne              = Ne,
-                         save.Predict    = save.Predict,
-                         cs              = cs,
-                         ct              = ct,
-                         n.cores         = n.cores,
-                         seed            = seed,
-                         itMin           = itMin,
-                         itMax           = itMax,
-                         tol.real        = tol.real,
-                         plot            = plot,
-                         nu              = nu,
-                         var.select      = var.select,
-                         positive        = positive,
-                         threshold               = threshold)
-      R$Tuning.parameter$ch = G.basic.data$ch
-      R$Tab_Name <- Tab_Name
+      R <- .VB.EnKF(data            = GSD$train,
+                       test            = GSD$test,
+                       prior           = prior,
+                       Para.List       = Para.List,
+                       true.Para.List  = NULL,
+                       center.y        = center.y,
+                       scale.y         = scale.y,
+                       Object          = GSD$Object,
+                       verbose         = verbose,
+                       verbose.VB      = verbose.VB,
+                       transf.Response = transf.Response,
+                       Ne              = Ne,
+                       save.Predict    = save.Predict,
+                       cs              = cs,
+                       ct              = ct,
+                       n.cores         = n.cores,
+                       seed            = seed,
+                       itMin           = itMin,
+                       itMax           = itMax,
+                       tol.real        = tol.real,
+                       plot            = plot,
+                       positive        = positive,
+                       MCMC            = MCMC)
       CV.Re[[num]] <- R
     }
   }

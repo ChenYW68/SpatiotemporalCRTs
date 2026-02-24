@@ -1,6 +1,6 @@
+# options(rgdal_show_exportToProj4_warnings="none")
 # # 1 loading packages ---------------------------------------
-packages <- c(#"RandomFields",
-              "data.table",
+packages <- c("data.table",
               "ggplot2",
               "plyr",
               "parallel",
@@ -31,7 +31,8 @@ packages <- c(#"RandomFields",
               "mvnfast",
               "spam",
               "scoringutils",
-              "rARPACK"
+              "rARPACK",
+              "mvnfast"
               )
 # ,'MASS'
 # 2  library

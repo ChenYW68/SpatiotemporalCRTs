@@ -1,34 +1,35 @@
-.VB.Laplace <- function (data              = NULL,
-                         Hv.Zg           = 0,
-                         data.trans.tsv  = NULL,
-                         Ks              = NULL,
-                         S               = NULL,
-                         prior           = NULL,
-                         Para.List       = NULL,
-                         verbose.VB      = FALSE,
-                         nu              = c(1e-1, 1e-1, 1e-1),
-                         var.select      = TRUE,
-                         threshold       = c(2, 2),
-                         test            = test,
-                         iter            = 0){
+.VB <- function (data            = NULL,
+                 Hv.Zg           = 0,
+                 data.trans.tsv  = NULL,
+                 Ks              = NULL,
+                 S               = NULL,
+                 prior           = NULL,
+                 Para.List       = NULL,
+                 verbose.VB      = FALSE,
+                 test            = NULL,
+                 Ne              = NULL,
+                 iter            = 0){
   options(warn = -1)
   cat(paste0("\n***************************************************************** \n"))
   cat(paste0("*\n"))
-  cat(paste0("*     Start to execute the VB and Laplace approximate ... \n"))
+  cat(paste0("*     Start to execute the MCMC approximate ... \n"))
   cat(paste0("*\n"))
   cat(paste0("***************************************************************** \n"))
   n  <- 0
   Nt <- data[[names(data)[[1]]]]$Nt
+  assign("sub.Nt", Nt, envir = .GlobalEnv)
+
+
   Py <- length(names(data))
   residuals <- residuals.x <- data.trans.tsv$tsv.y - Hv.Zg
-  k <- 0
+  k  <- 0
 
   for(py in 1:Py){ n <- n + data[[names(data)[[py]]]]$n }
 
   #  beta ----
-  Sigma.alpha <- NULL
   if(!is.null(data[[names(data)[[1]]]]$X_ts)){
     #update varPhi
+    # Para.List[[names(data)[[1]]]]$beta$pub.post.prob <- list()
     if(is.null(Para.List[[names(data)[[1]]]]$beta$gamma[1])){
       Para.List[[names(data)[[1]]]]$beta$gamma <- vector()
       for(px in 1:data[[names(data)[[1]]]]$Px){
@@ -45,8 +46,8 @@
     a  <- 1; b <- 1
 
     X.names <- dimnames(data[[names(data)[[1]]]]$X_ts)[[1]]
-
     Sigma.alpha <- prior[[names(data)[[1]]]]$beta$sigma.sq
+
 
     # if(is.na(Para.List[[names(data)[[1]]]]$beta$mu.beta[1])){
     beta.name             <- dimnames(data[[names(data)[[1]]]]$X_ts)[[1]]
@@ -59,7 +60,7 @@
         residuals.x[, data[[names(data)[[py]]]]$index.y]  <- residuals[, data[[names(data)[[py]]]]$index.y] -
           Xts.beta.fun(tsv.x = data[[names(data)[[py]]]]$sX_ts,
                        alpha = Para.List[[names(data)[[py]]]]$sbeta$mu.beta,
-                       self  = TRUE) #- Hv.Zg[, data[[names(data)[[py]]]]$index.y]
+                       self  = TRUE)
       }
     }
 
@@ -74,10 +75,12 @@
 
   if(!is.null(data[[names(data)[[1]]]]$X_ts)){
     post_betaX_sigma.sq <- solve(X_CuSum + solve(Sigma.alpha))
-    if(var.select){eta <- XYXi_CuSum}else{
-      eta <- XYXi_CuSum + solve(Sigma.alpha) %*% prior[[names(data)[[1]]]]$beta$mu.beta
-    }
-    post_betaX_mu <- post_betaX_sigma.sq %*% eta %>% as.vector()
+    # if(var.select){eta <- XYXi_CuSum}else{
+     eta <- XYXi_CuSum + solve(Sigma.alpha) %*% prior[[names(data)[[1]]]]$beta$mu.beta
+    # }
+    post_betaX_mu <- MASS::mvrnorm(1, mu    = post_betaX_sigma.sq %*% eta %>% as.vector(), Sigma = post_betaX_sigma.sq)
+
+
     for(py in 1:Py){
       Para.List[[names(data)[[py]]]]$beta$mu.beta           <- matrix(NA, nrow = length(beta.name), ncol = 1)
       rownames(Para.List[[names(data)[[py]]]]$beta$mu.beta) <- beta.name
@@ -86,10 +89,10 @@
       Para.List[[names(data)[[py]]]]$beta$sigma.sq          <- post_betaX_sigma.sq
 
     }
-
+    # betaX_sigma.sq ----
     cov.sd <- data.frame(round(as.data.frame(post_betaX_sigma.sq), 5), "|",
                          SD = round(sqrt(as.vector(diag(post_betaX_sigma.sq))), 5))
-    colnames(cov.sd)[c(ncol(cov.sd) - 1)] <- c("|")
+    colnames(cov.sd)[c(ncol(cov.sd) - 1)] <- c("*")
     Para.List[[names(data)[[1]]]]$beta$cov.prob <- cov.sd
 
     if (verbose.VB) {
@@ -103,32 +106,55 @@
     residuals <- residuals - Xts.beta.fun(tsv.x = data.trans.tsv$tsv.x,
                                           alpha = Para.List[[names(data)[[1]]]]$beta$mu.beta,
                                           self  = FALSE)
-  }
 
-  # sigma.sq
+  }
+  #  sigma.sq ----
+  mean.residuals <- data.trans.tsv$tsv.y - Xts.beta.fun(tsv.x = data.trans.tsv$tsv.x,
+                                                        alpha = Para.List[[names(data)[[1]]]]$beta$mu.beta,
+                                                        self  = FALSE)
   t1 <- proc.time()
   n.diff <- NULL
   for(py in 1:length(names(data))){
-    Para.List[[names(data)[[py]]]]$obs.sigma.sq$a <- a_sigma.sq <- prior[[names(data)[[py]]]]$obs.sigma.sq$a + data[[names(data)[[py]]]]$n * data[[names(data)[[py]]]]$Nt/2
-    f_sigma.sq                     <-  t(as.vector(residuals[, data[[names(data)[[py]]]]$index.y])) %*% as.vector(residuals[, data[[names(data)[[py]]]]$index.y])
-    Para.List[[names(data)[[py]]]]$obs.sigma.sq$b <- b_sigma.sq <- prior[[names(data)[[py]]]]$obs.sigma.sq$b + f_sigma.sq/2
-    Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq <- ifelse(is.na(as.vector(b_sigma.sq/(a_sigma.sq - 1))), 1,
-                                                                      as.vector(b_sigma.sq/(a_sigma.sq - 1)))
+    Para.List[[names(data)[[py]]]]$obs.sigma.sq$a <- a_sigma.sq <- prior[[names(data)[[py]]]]$obs.sigma.sq$a +
+                                                                   data[[names(data)[[py]]]]$n * data[[names(data)[[py]]]]$Nt/2
+    temp1 <-  sapply(seq_len(Nt), function(t) {
+      (t(data[[names(data)[[py]]]]$Y_ts[t, ]) %*% data[[names(data)[[py]]]]$Y_ts[t, ] - 2 * t(Para.List[[names(data)[[py]]]]$beta$mu.beta)%*%
+         (data[[names(data)[[py]]]]$X_ts[, t, ]) %*% (data[[names(data)[[py]]]]$Y_ts[t, ]) )[1] +
+        sum(diag((data[[names(data)[[py]]]]$X_ts[, t, ] %*% t(data[[names(data)[[py]]]]$X_ts[, t, ]) %*%
+                    (Para.List[[names(data)[[py]]]]$beta$sigma.sq + Para.List[[names(data)[[py]]]]$beta$mu.beta %*% t(Para.List[[names(data)[[py]]]]$beta$mu.beta)))))
+    }, simplify = "matrix") %>% sum()
 
-    if(Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq > 1e4){
-      # cat("**************************", "\n")
-      Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq <- 1
+
+
+    temp2 <- sapply(seq_len(Nt), function(t) {
+      -(2 * spam::t(Hv.Zg[t, data[[names(data)[[py]]]]$index.y]) %*% mean.residuals[t, data[[names(data)[[py]]]]$index.y])[1]
+    }, simplify = "matrix") %>% sum()
+
+
+    temp3 <-  sum(spam::diag.spam((t(data[[names(data)[[py]]]]$Hs) %*% data[[names(data)[[py]]]]$Hs %*% S[[paste0(names(data)[[py]], ".Intercept")]]$S11)))
+
+    f_sigma.sq <- temp1 + temp2 + temp3
+
+    if((f_sigma.sq < 0)){
+      f_sigma.sq  <-  t(as.vector(residuals[, data[[names(data)[[py]]]]$index.y])) %*% as.vector(residuals[, data[[names(data)[[py]]]]$index.y])
     }
+
+
+    Para.List[[names(data)[[py]]]]$obs.sigma.sq$b <- b_sigma.sq <- prior[[names(data)[[py]]]]$obs.sigma.sq$b + f_sigma.sq/2
+    old.value    <-  Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq
+    library(MCMCpack)
+    Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq <- rinvgamma(1, shape = a_sigma.sq, scale = b_sigma.sq)
+
 
     if (verbose.VB) {
       cat("---------------------------------", "\n")
+      # cat("*********************************", "\n")
       cat(paste0("obs.sigma.sq of ", names(data)[[py]], " [", round(Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq, 5), "]\n\n"))
 
     }
     n.diff[py] <- data[[names(data)[[py]]]]$n
   }
 
-  # if(corr.within.res)
   {
     if(length(diff(n.diff)) == 0){
       Para.List$common.obs.sigma.sq$mu.sigma.sq <-
@@ -136,11 +162,7 @@
     }else if(sum(diff(n.diff)) == 0){
       temp <- NULL
       for(py in 1:length(names(data))){
-        # for(t in 1: data[[names(data)[[py]]]]$Nt){
-        temp <- cbind(temp, (
-          as.vector(residuals[, data[[names(data)[[py]]]]$index.y])
-        ))
-        # }
+        temp <- cbind(temp, (as.vector(residuals[, data[[names(data)[[py]]]]$index.y])))
       }
       Para.List$common.obs.sigma.sq$mu.sigma.sq <- cov(temp)
     }else if(sum(diff(n.diff)) != 0){
@@ -168,7 +190,7 @@
             # cat("************************************************************\n")
             # cat("* \n")
             cat("*---\n")
-            cat(paste0("* GMRFs (self) on the ", g, "th subdomain ...\n"))  
+            cat(paste0("* GMRFs (self) on the ", g, "th subdomain ...\n"))  # with respect to the [", sub.rf.name, "] of ", names(data)[py], "
             # cat("* \n")
             cat("************************************************************\n\n")
           }
@@ -177,18 +199,16 @@
             g.index <- data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]
             #---other parameters
 
-            rf.corr <-
-              exp(-sqrt(data[[py]]$Grid.infor$level[[g]]$BAUs.Dist^2/Para.List[[names(data)[py]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1]^2))
+            rf.corr <- exp(-sqrt(data[[py]]$Grid.infor$level[[g]]$BAUs.Dist^2/Para.List[[names(data)[py]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1]^2))
 
             mu.alpha <-  Para.List[[names(data)[py]]]$st.sRF[[sub.rf.name]]$LR.coef$mu.alpha
             assign("var.covariable", data[[names(data)[[py]]]]$Grid.infor$var.covariable, envir = .GlobalEnv)
-            #
-
-            mat.x <- as.matrix(var.covariable)
+            mat.x  <- as.matrix(var.covariable)
             mu.var <- exp(mat.x %*% mu.alpha)
             # cat("Variance: ", range(mu.var), "\n\n\n\n\n")
             rf.corr <- diag(as.vector(mu.var^(0.5))) %*% rf.corr %*% diag(as.vector(mu.var^(0.5)))
-            Q <- spam::as.spam(solve(rf.corr))
+            Q       <- spam::as.spam(solve(rf.corr))
+
             #----other parameters
 
             Q.St_1_0 <- sum(spam::diag.spam((Q) %*%S[[sub.rf.name]]$S10[data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]],
@@ -198,12 +218,21 @@
                                                                         data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]]))
 
             #
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] <- solve(Q.St_1_1*Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq + 1/prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$sigma.sq[g]) %>%
-              as.vector()
+            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] <-
+                            solve(Q.St_1_1*Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq +
+                                    1/prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$sigma.sq[g]) %>% as.vector()
+
+
             theta1_eta <- Q.St_1_0*Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq
               prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu[g]/prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$sigma.sq[g]
 
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g] <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] %*% theta1_eta %>% as.vector()
+            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g] <-
+              rnorm(1, mean = Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] %*% theta1_eta %>% as.vector(),
+                    sd = sqrt(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g]))
+
+
+
+              # Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] %*% theta1_eta %>% as.vector()
 
             Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g] <- ifelse(abs(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g]) < 1e-10,
                                                                                              rnorm(1, mean = prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu[g],
@@ -228,28 +257,47 @@
             #--- tau.sq
             previous.est <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g]
 
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$a[g] <- prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$a[g] + data[[names(data)[[py]]]]$Grid.infor$level[[g]]$nKnots * (Nt + 1)/2
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$b[g] <- prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$b[g] + (sum(spam::diag.spam(Q %*% S[[sub.rf.name]]$S11[data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]],
-                                                                                                                                                                                                         data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]])) -
-                                                                                                                                                            2*Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g] * Q.St_1_0 +
-                                                                                                                                                            (Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] +
-                                                                                                                                                               Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g]^2) * Q.St_1_1)/2 +
+
+            QS.Sum <- (sum(spam::diag.spam(Q %*% S[[sub.rf.name]]$S11[data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]],
+                                                                      data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]])) -
+                         2*Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g] * Q.St_1_0 +
+                         (Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] +
+                            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g]^2) * Q.St_1_1)/2 +
               sum(spam::diag.spam((Q) %*% S[[sub.rf.name]]$V.t00[data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]],data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]]))/2
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g] <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$a[g]/(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$b[g])
 
 
-            range.tau.sq <- c(1e-2, 1E2)
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.ini.tau.sq$mu.tau.sq[g] <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g] <-
-              ifelse((Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g]   < range.tau.sq[1])|
-                       (Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g] > range.tau.sq[2]),
-                     previous.est, Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g])
-            if(verbose.VB){
-              cat(paste0("Expectation of the tau.sq in the ",
-                         g, "th subdomain [", Round(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g], 5), "]\n"))
-              # cat("............................s............................\n")
+            if(is.null(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$Xi[g])){
+              Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$Xi[g] <- 1
             }
+            current.Xi   <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$Xi[g]
+            candidate.Xi <- rgamma(1, shape = prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$b[g],
+                                      scale = prior[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$b[g])
+            #  tau.sq ----
+            Low <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$L[g]#1e-5
+            Upp <- Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$H[g]#1e-2
+            current.value   <- 0.5*n*Nt*log(Low + (Upp - Low)/(1 + current.Xi))   - 0.5*(Upp - Low)/(1 + current.Xi)*QS.Sum
+            candidate.value <- 0.5*n*Nt*log(Low + (Upp - Low)/(1 + candidate.Xi)) - 0.5*(Upp - Low)/(1 + candidate.Xi)*QS.Sum
+
+            log.acc.prob <- candidate.value - current.value
+            acc.prob     <- exp(min(0, log.acc.prob))
+
+            if (runif(1) < acc.prob) {
+              Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$Xi[g] <- candidate.Xi
+              accepted <- TRUE
+            } else {
+              accepted <- FALSE
+            }
+
+            cat("Accepted:", accepted, "\n")
+            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g] <- Low + (Upp - Low)/(1 +Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$Xi[g])
+
+            if(verbose.VB){
+              cat(paste0("Expectation of the tau.sq in the ", g, "th subdomain [", Round(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g], 5), "]\n"))
+            }
+
+
             assign("mu.tau.sq", Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$proc.tau.sq$mu.tau.sq[g], envir = .GlobalEnv)
-            assign("Nt", Nt, envir = .GlobalEnv)
+            # assign("Nt", Nt, envir = .GlobalEnv)
             assign("Rho", Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g], envir = .GlobalEnv)
             assign("Rho.sq", (Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$var.rho.v[g] + Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$rho.v$mu.rho.v[g]^2), envir = .GlobalEnv)
             assign("S00", S[[sub.rf.name]]$S00[data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]], data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]], envir = .GlobalEnv)
@@ -266,44 +314,76 @@
             assign("prior.Phi.v.a", prior[[names(data)[py]]]$st.sRF[[sub.rf.name]]$Phi.v$a, envir = .GlobalEnv)
             assign("prior.Phi.v.b", prior[[names(data)[py]]]$st.sRF[[sub.rf.name]]$Phi.v$b, envir = .GlobalEnv)
             assign("LR.coef.prior", prior[[names(data)[py]]]$st.sRF[[sub.rf.name]]$LR.coef, envir = .GlobalEnv)
-            assign("residuals", residuals, envir = .GlobalEnv)
+
+            assign("residuals", mean.residuals, envir = .GlobalEnv)
             assign("Hdist", data[[names(data)[[py]]]]$Hdist[, data[[names(data)[[py]]]]$Grid.infor$summary$g.index[[g]]], envir = .GlobalEnv)
             assign("sigma.sq", Para.List$common.obs.sigma.sq$mu.sigma.sq[py, py], envir = .GlobalEnv)
             assign("Vt.mean", Ks[[sub.rf.name]]$Vt.mean[-1, ], envir = .GlobalEnv)
             assign("index.y", data[[names(data)[[py]]]]$index.y, envir = .GlobalEnv)
-            op.var_delta <- optim(c(mu.alpha),
-                                   fn = non_f_var_alpha,
-                                   method = "L-BFGS-B",
-                                   lower   = c(-1e2),
-                                   upper   = c(1e0),
-                                   control = list(trace = verbose.VB, iter.max = 30))
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$LR.coef$mu.alpha <- op.var_delta$par
-            assign("mu.alpha", op.var_delta$par, envir = .GlobalEnv)
+
+
+            {
+              current.delta   <- -non_f_var_alpha(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$LR.coef$mu.alpha)
+              alpha           <- c(runif(1, -1e0, 5), runif(1, -1e0, 5))
+              candidate.delta <- -non_f_var_alpha(alpha)
+
+
+              log.acc.prob <- candidate.delta - current.delta
+              acc.prob <- exp(min(0, log.acc.prob))
+              if (runif(1) < acc.prob) {
+                Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$LR.coef$mu.alpha <- alpha
+                accepted <- TRUE
+              } else {
+                accepted <- FALSE
+              }
+
+              cat("Accepted:", accepted, "\n")
+            }
+
+            assign("mu.alpha", Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$LR.coef$mu.alpha, envir = .GlobalEnv)
+
+            #  alpha ----
             if(verbose.VB){
               cat(paste0("Expectation of the delta in the ",
-                         g, "th subdomain [", Round(op.var_delta$par, 5), "]\n"))
+                         g, "th subdomain [", Round(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$LR.coef$mu.alpha, 5), "]\n"))
+              # cat("............................s............................\n")
             }
-            # Hs ----
-            op.zeta <- optim(c(log(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1])),
-                              fn      = non_f_range, 
-                              method  = "L-BFGS-B",
-                              lower   = c(log(1e0)),
-                              upper   = c(log(1e2))
-                           )
-            hessc <- numDeriv::hessian(func = non_f_range, x = op.zeta$par)
-            mu.phi <- exp(op.zeta$par[1])
-            Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1] <- mu.phi
-            Hs.temp <- exp(-(Hdist/mu.phi))
-            data[[names(data)[[py]]]]$Grid.infor$Hs <- as(Hs.temp/apply(Hs.temp, 1, sum), "sparseMatrix")
-             if(!is.null(test)){
-               Hs.temp <-  exp(-(test[[names(test)[[py]]]]$Hdist[, test[[names(test)[[py]]]]$Grid.infor$summary$g.index[[g]]]/mu.phi))
-               test[[names(test)[[py]]]]$Grid.infor$Hs <- as(Hs.temp/apply(Hs.temp, 1, sum), "sparseMatrix")
-             }
+            #  zeta ----
+            {
+              current.range   <- -non_f_range(log(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[g]))
+              mu.phi          <- runif(1, Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$L[g],
+                                          Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$H[g])
+              candidate.range <- -non_f_range(log(mu.phi))
 
+              log.acc.prob <- candidate.range - current.range
+              acc.prob <- exp(min(0, log.acc.prob))
+              if (runif(1) < acc.prob) {
+                Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1] <- mu.phi
+                accepted <- TRUE
+              } else {
+                accepted <- FALSE
+              }
+
+              cat("Accepted:", accepted, "\n")
+            }
+
+            rr <- 1
+            Hs.temp <- exp(-(rr*Hdist/Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1]))
+
+            gg <- Hs.temp/apply(Hs.temp, 1, sum)
+            data[[names(data)[[py]]]]$Hs <- gg
+
+
+            if(!is.null(test)){
+              Hs.temp <-  exp(-(rr*test[[names(test)[[py]]]]$Hdist[, test[[names(test)[[py]]]]$Grid.infor$summary$g.index[[g]]]/Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1]))
+
+              gg <- Hs.temp/apply(Hs.temp, 1, sum)
+              test[[names(test)[[py]]]]$Hs <- gg
+            }
             if(verbose.VB){
               cat(paste0("Expectation of the Phi.v in the ",
                          g, "th subdomain [",
-                         Round(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[1], 3), "]\n"))
+                         Round(Para.List[[names(data)[[py]]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v[g], 3), "]\n"))
             }
           }
         }

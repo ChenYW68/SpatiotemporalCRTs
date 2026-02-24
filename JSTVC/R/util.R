@@ -1,60 +1,420 @@
+calc_performance <- function(estimates, true_values) {
+  # estimates: matrix or data frame of size (n_rounds x n_coef)
+  # true_values: vector of true coefficient values (length = n_coef)
+
+  # Check dimensions
+  if (ncol(estimates) != length(true_values)) {
+    stop("Number of columns in estimates must equal length of true_values.")
+  }
+
+  # Compute summary statistics
+  bias <- colMeans(estimates) - true_values
+  sd <- apply(estimates, 2, sd)
+  rmse <- (colMeans((estimates - matrix(true_values,
+                                        nrow = nrow(estimates),
+                                        ncol = length(true_values),
+                                        byrow = TRUE))^2))
+
+  # Combine into a data frame
+  Details <- data.frame(
+    Coefficient = paste0("Beta", seq_along(true_values)),
+    Bias = round(bias, 5),
+    SD = round(sd, 5),
+    MSE = round(rmse, 5)#,
+    # Cs    = cs,
+    # Ne    = ne
+  )
+
+  # Overall <- data.frame(
+  #   sBias = sqrt(sum(bias^2)),
+  #   aBias = mean(abs(bias)),
+  #   SD    = sqrt(mean(sd^2)),
+  #   RMSE  = sqrt(mean(rmse^2)),
+  #   Cs    = cs,
+  #   Ne    = ne
+  # )
+  # ,Overall = Overall
+  return(list(Details = Details))
+}
+compute_coverage <- function(beta_mean, beta_var, beta_true, conf_level = 0.95) {
+  # beta_mean: R x p matrix of posterior means
+  # beta_var: R x p matrix of posterior variances
+  # beta_true: vector of true beta values (length p)
+  # conf_level: confidence level (default 0.95)
+
+  R <- nrow(beta_mean)
+  p <- ncol(beta_mean)
+
+  z <- qnorm(1 - (1 - conf_level) / 2)  # two-sided z
+
+  coverage_matrix <- matrix(FALSE, R, p)
+
+  for (r in 1:R) {
+    for (j in 1:p) {
+      sd_j <- sqrt(beta_var[r, j])
+      lower <- beta_mean[r, j] - z * sd_j
+      upper <- beta_mean[r, j] + z * sd_j
+      coverage_matrix[r, j] <- (beta_true[j] >= lower && beta_true[j] <= upper)
+    }
+  }
+
+  return(coverage_matrix)
+}
+
 spatial.taper <- function(cs, data){
   spTaper <- list()
-  # D <- vector()
   if(length(cs) < length(data)){
     cs <- rep(cs, length(data))
   }
   for(py in 1:length(data)){
     spTaper[[py]] <- list()
     for(g in 1:data[[py]]$Grid.infor$summary$res) {
-      spTaper[[py]]$tuning[g] <- cs[py] 
-      row.min <- min(data[[py]]$Grid.infor$level[[g]]$BAUs.Dist)
-      spTaper[[py]]$tuning[g]  <- ifelse(spTaper[[py]]$tuning[g] < row.min, row.min, spTaper[[py]]$tuning[g])
-      spTaper[[py]]$taper[[g]] <- as(fields::Wendland(data[[py]]$Grid.infor$level[[g]]$BAUs.Dist
-                                                , theta = spTaper$tuning[g]
-                                                , dimension = 1, k = 1),
-                               "dgCMatrix")
+      spTaper[[py]]$tuning[g] <- cs[py]
+      spTaper[[py]]$taper[[g]] <- spam::as.spam(fields::Wendland(data[[py]]$Grid.infor$level[[g]]$BAUs.Dist
+                                                , theta = spTaper[[py]]$tuning[g]
+                                                , dimension = 1, k = 1))
     }
   }
 
   return(spTaper)
 }
-# transform spatial coordinates by WGS84
-spCoords.transform <- function(loc, col = c("LON", "LAT"),
-                               colname = c("LON_X", "LAT_Y"),
-                               method = 1){
-  nc <- ncol(loc)
-  if(method == 1){
-    d <- loc[, col]
-    coordinates(d) <- col
-    proj4string(d) <- CRS("+proj=longlat +datum=WGS84")# WGS 84
-    CRS.new <- CRS("+proj=utm +zone=51 ellps=WGS84")
-    sp.coord.trans <- spTransform(d, CRS.new)
+# tapering function
+taper <- function(distance, radius) Wendland(distance, radius, 1, 1)
 
 
-    loc <- cbind(loc, sp.coord.trans@coords[,1], sp.coord.trans@coords[, 2])
-  }else{
-    LCC <- "+proj=lcc +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0
-+y_0=0 +ellps=GRS80 +datum=NAD83 +units=km +no_defs"
-    # transforming latitude and longitude using the Lambert conformal projection
-    sp.coord <- SpatialPoints(coords = loc[, col],
-                              proj4string = CRS("+proj=longlat +ellps=WGS84"))
+plot_normal <- function(mean = 0, sd = 1, from = NULL, to = NULL, n = 200,
+                        main = "Normal Density", col = "blue", lwd = 2, ...) {
+  # Default x-range: ±4 standard deviations around the mean
+  if (is.null(from)) from <- mean - 4 * sd
+  if (is.null(to))   to <- mean + 4 * sd
 
-    sp.coord.trans <- spTransform(sp.coord,  CRS(LCC))
-    #
-    #   #  %>% setnames(c("LON", "LAT"), c("LON_X", "LAT_Y"))
-    sp.coord.trans <- as.data.frame(sp.coord.trans)
-    #   colnames(sp.coord.trans) <- colname
-    # loc = as.data.frame(loc)
-    loc <- cbind(loc, sp.coord.trans[, 1], sp.coord.trans[, 2])
+  # Generate x values
+  x <- seq(from, to, length.out = n)
+  # Compute density values
+  y <- dnorm(x, mean = mean, sd = sd)
 
+  # Plot
+  plot(x, y, type = "l", main = main,
+       xlab = "x", ylab = "Density", col = col, lwd = lwd, ...)
+
+  # Add vertical line at the mean
+  abline(v = mean, col = "red", lty = 2)
+}
+
+plot_two_normal_distribution <- function(mean1, sd1, xm, ym, lab.p) {
+  # Define the range for x values
+  x <- seq(min(mean1 - 4*sd1),
+           max(mean1 + 4*sd1),
+           length.out = 100)
+
+  # Calculate the density values for both distributions
+  y1 <- dnorm(x, mean = mean1, sd = sd1)
+
+
+  # Create the plot for the first normal distribution
+  plot(x, y1, type = 'l', lwd = 2, col = 'gray',
+       main = "Baseline",#latex2exp::TeX("$\\beta_0$")
+       xlab = "Intercept", ylab = "Density",
+       xlim = c(xm[1], xm[2]),
+       ylim = c(0, ym))
+  abline(v = mean1, col = scales::alpha("gray", alpha = 0.3))
+  mtext(lab.p, side = 3, line = 0.51, adj = 0, cex = 2)
+  ci1 <- qnorm(c(0.025, 0.975), mean = mean1, sd = sd1)
+  polygon(c(ci1[1], seq(ci1[1], ci1[2], length.out = 100), ci1[2]),
+          c(0, dnorm(seq(ci1[1], ci1[2], length.out = 100), mean = mean1, sd = sd1), 0),
+          col = rgb(0.5, 0.5, 0.5, alpha = 0.2), border = NA)
+  # Add the second normal distribution to the plot
+
+  # Add a legend
+  legend("topleft", legend = c(paste("N(", HDCM::Round(mean1, 2), ",", HDCM::Round(sd1, 2), ")", sep = "")),
+         col = c("gray", "red"), lwd = 2)
+
+  # Add a grid for better visibility
+  grid()
+}
+
+plot_two_normal_distributions <- function(mean1, sd1,
+                                          mean2, sd2,
+                                          main,
+                                          xm = NULL,
+                                          ym = NULL,
+                                          hjust = 0,
+                                          vjust = 0,
+                                          lab.p = NULL,
+                                          ylab  = "Density",
+                                          labels   = c("MCMC", "VB"),
+                                          bar.cex  = 1,
+                                          text.cex = 1,
+                                          x.adjust = 0.05,
+                                          y.pos    = c(0.9, 0.84, 0.72, 0.60),
+                                          show.CI.label = TRUE) {
+  # Define the range for x values
+  x <- seq(min(mean1 - 4*sd1, mean2 - 4*sd2),
+           max(mean1 + 4*sd1, mean2 + 4*sd2),
+           length.out = 100)
+
+  # x_min <- min(mapply(function(m,s) m - 4*s, mean_list, sd_list))
+  # x_max <- max(mapply(function(m,s) m + 4*s, mean_list, sd_list))
+  # if (!is.null(from)) x_min <- from
+  # if (!is.null(to)) x_max <- to
+  # x <- seq(x_min, x_max, length.out = n)
+
+  # Calculate the density values for both distributions
+  y1 <- dnorm(x, mean = mean1, sd = sd1)
+  y2 <- dnorm(x, mean = mean2, sd = sd2)
+
+  if(is.null(xm)){
+    xm <- c(min(x), max(x))
+  }
+  if(is.null(ym)){
+    ym <- max(y1, y2)
   }
 
-  # grid.coords$LON_X = sp.coord.trans@coords[,1]
-  # grid.coords$LAT_Y = d.ch1903@coords[,2]
-  colnames(loc)[(nc + 1):(nc + 2)] <- colname
-  return(loc)
+  # Perform a t-test to calculate p-value
+  # t_test_result <- t.test(rnorm(10000, mean = mean1, sd = sd1),
+  #                         rnorm(10000, mean = mean2, sd = sd2))
+  # p_value <- HDCM::Round(t_test_result$p.value, 4)
+
+  # Create the plot for the first normal distribution
+  plot(x, y1,
+       type = 'l',
+       lwd = 3,
+       lty = 5,
+       col = 'blue',
+       # main = main,
+       xlab = "Difference in ATEs",
+       ylab = ylab,#expression(alpha)
+       xlim = c(xm[1], xm[2]),
+       ylim = c(0, ym)
+  )
+  # abline(v = mean1, col = scales::alpha("blue", alpha = 0.3))
+  ci1 <- qnorm(c(0.025, 0.975), mean = mean1, sd = sd1)
+  if(!is.null(lab.p)){
+    mtext(lab.p, side = 3, line = 0.51, adj = 0, cex = 2)
+  }
+  lower1 <- mean1 - 1.96 * sd1
+  upper1 <- mean1 + 1.96 * sd1
+
+  y_lower1 <- dnorm(lower1, mean = mean1, sd = sd1)
+  y_upper1 <- dnorm(upper1, mean = mean1, sd = sd1)
+
+  segments(x0 = lower1, y0 = 0, x1 = lower1, y1 = y_lower1,
+           col = scales::alpha('blue', alpha = 0.5), lty = 5, lwd = 3)
+  segments(x0 = upper1, y0 = 0, x1 = upper1, y1 = y_upper1,
+           col = scales::alpha('blue', alpha = 0.4), lty = 5, lwd = 3)
+
+  polygon(c(ci1[1], seq(ci1[1], ci1[2], length.out = 100), ci1[2]),
+          c(0, dnorm(seq(ci1[1], ci1[2], length.out = 100), mean = mean1, sd = sd1), 0),
+          col = rgb(0, 0, 1, alpha = 0.2), border = NA)
+
+
+
+
+
+
+
+  # Add the second normal distribution to the plot
+  lines(x, y2, lwd = 2, col = 'red')
+  # abline(v = mean2, col = scales::alpha("red", alpha = 0.3))
+
+
+  ci2 <- qnorm(c(0.025, 0.975), mean = mean2, sd = sd2)
+  polygon(c(ci2[1], seq(ci2[1], ci2[2], length.out = 100), ci2[2]),
+          c(0, dnorm(seq(ci2[1], ci2[2], length.out = 100), mean = mean2, sd = sd2), 0),
+          col = rgb(1, 0, 0, alpha = 0.2), border = NA)
+
+  lower2 <- mean2 - 1.96 * sd2
+  upper2 <- mean2 + 1.96 * sd2
+
+  y_lower2 <- dnorm(lower2, mean = mean2, sd = sd2)
+  y_upper2 <- dnorm(upper2, mean = mean2, sd = sd2)
+
+  segments(x0 = lower2, y0 = 0, x1 = lower2, y1 = y_lower2,
+           col = scales::alpha('red', alpha = 0.5), lty = 1, lwd = 3)
+  segments(x0 = upper2, y0 = 0, x1 = upper2, y1 = y_upper2,
+           col = scales::alpha('red', alpha = 0.4), lty = 1, lwd = 3)
+
+ if(show.CI.label){
+   text(max(lower1, lower2), min(y_lower1, y_lower2), labels = sprintf("%.2f", lower1),
+        pos = 4, col = "blue")
+   text(min(upper1, upper2), min(y_upper1, y_upper2), labels = sprintf("%.2f", upper1),
+        pos = 2, col = "blue")
+
+
+   text(max(lower1, lower2), 1e-1, labels = sprintf("%.2f", lower2),
+        pos = 4, col = "red")
+   text(min(upper1, upper2), 1e-1, labels = sprintf("%.2f", upper2),
+        pos = 2, col = "red")
+ }
+
+
+
+
+  # text(x = p.value.loc, y = 14, labels = paste0("p value from t test: < ", p_value), col = "black", cex = 1.0)
+  # Add a legend
+
+  posterior_diff <- rnorm(1E4, mean1 - mean2, sqrt(sd1^2 + sd2^2))
+
+  # Calculate the 95% credible interval of the mean difference
+  credible_interval <- quantile(posterior_diff, c(0.025, 0.975))
+
+
+  usr <- par("usr")  # c(xmin, xmax, ymin, ymax)
+  legend_x <- usr[1] - 0.02*(usr[2]-usr[1])
+  legend_y <- usr[4] + 0.02*(usr[4]-usr[3])
+
+  leg <- legend(#"topleft",
+                x = legend_x,
+                y = legend_y,
+         legend = labels,
+         col = c("blue", "red"),
+         lwd = c(3, 3),
+         lty = c(5, 1),
+         ncol = 2,
+         bty    = "n",
+         cex   = bar.cex,
+         seg.len = 3,
+         inset = c(-0.01, 0.01))
+
+  y_top <- leg$rect[4]$top
+
+
+  y_rel <- y.pos
+
+  y_positions <- usr[3] + y_rel * (y_top - usr[3])
+
+
+  text(
+    x = usr[1] + x.adjust,
+    y = y_positions[1],
+    labels = "95% CIs of mean difference",
+    font = 2,
+    col = "black",
+    cex = text.cex,
+    adj = c(0, 1)
+  )
+
+
+  text(
+    x = usr[1] + x.adjust,
+    y = y_positions[2],
+    labels = as.expression(bquote(
+      atop(
+        "Between arms using " * .(labels[[1]]) * ":",
+        paste("[" * .(Round(lower1, 2)) * ", " * .(Round(upper1, 2)) * "]")
+      )
+    )),#paste0("Between arms using", labels[1], ":\n[", Round(lower1,2), ", ", Round(upper1,2), "]"),
+    col = "black",
+    cex = text.cex,
+    adj = c(0,1)
+  )
+
+  text(
+    x = usr[1] + x.adjust,
+    y = y_positions[3],
+    labels =  as.expression(bquote(
+      atop(
+        "Between arms using " * .(labels[[2]]) * ":",
+        "[" * .(Round(lower2, 2)) * ", " * .(Round(upper2, 2)) * "]"
+      )
+    )),#paste0("Between arms using VB:\n[", Round(lower2,2), ", ", Round(upper2,2), "]"),
+    col = "black",
+    cex = text.cex,
+    adj = c(0,1)
+  )
+
+
+  text(
+    x = usr[1] + x.adjust,
+    y = y_positions[4],
+    labels = as.expression(bquote(atop(
+      "Between " * .(labels[[1]]) * " and " * .(labels[[2]]) * ":",
+      "[" * .(Round(credible_interval[1], 2)) * ", " * .(Round(credible_interval[2], 2)) * "]"
+    ))),
+      #paste0("Between", labels[1], "and" , labels[2], ":\n[", Round(credible_interval[1],2), ", ", Round(credible_interval[2],2), "]"),
+    col = "black",
+    cex = text.cex,
+    adj = c(0,1)
+  )
+
+  mtext(main, side = 3, line = 0.51, adj = 0, cex = 1.8)
+  # Add a grid for better visibility
+  # grid()
 }
+
+
+
+
+
+plot_one_normal_distribution <- function(mean, sd, ylab = "", main){
+
+  # Compute the 95% credible interval for the normal distribution
+  lower <- mean - 1.96 * sd
+  upper <- mean + 1.96 * sd
+
+  # Create a sequence of x values around mu (covering ±4 sigma)
+  x <- seq(mean - 4 * sd, mean + 4 * sd, length.out = 200)
+  y <- dnorm(x, mean = mean, sd = sd)
+
+  # Plot the normal density curve
+  # plot(x, y, type = "l", lwd = 2,
+  #      # main = paste("Differences in ATEs: Arm ", df$k1[i], "vs", df$k2[i]),
+  #      xlab = "Value", ylab = "Density")
+
+  # if(i == 1){
+  #   plot(x, y, type = "l",
+  #        xlim = range(x),    # from min(x) to max(x)
+  #        xaxs = "i",         # remove default padding
+  #        xaxt = "n",         # no automatic x-axis
+  #        xlab = "Difference of ATEs",
+  #        ylab = ylab)
+  # }else{
+    plot(x, y, type = "l",
+         xlim = range(x),    # from min(x) to max(x)
+         xaxs = "i",         # remove default padding
+         xaxt = "n",         # no automatic x-axis
+         xlab = "Difference in ATEs",
+         ylab = ylab)
+  # }
+
+  # 2) Construct a set of tick marks that includes both ends
+  #    We can combine 'pretty()' with the exact endpoints:
+  tickVals <- pretty(range(x))                     # typical 'nice' ticks
+  tickVals <- sort(unique(c(tickVals, range(x))))  # ensure min & max are included
+
+  # 3) Draw a custom x-axis using these tick marks
+  axis(1, at = tickVals, labels = sprintf("%.1f", tickVals))
+
+
+  # --- Remove the full vertical lines (abline) ---
+  # abline(v = lower, col = "red", lty = 2, lwd = 2)
+  # abline(v = upper, col = "red", lty = 2, lwd = 2)
+
+  # --- Use segments() to draw dashed lines only up to the curve ---
+  y_lower <- dnorm(lower, mean = mean, sd = sd)
+  y_upper <- dnorm(upper, mean = mean, sd = sd)
+
+  segments(x0 = lower, y0 = 0, x1 = lower, y1 = y_lower,
+           col = scales::alpha("red", alpha = 0.5), lty = 2, lwd = 3)
+  segments(x0 = upper, y0 = 0, x1 = upper, y1 = y_upper,
+           col = scales::alpha("red", alpha = 0.4), lty = 2, lwd = 3)
+
+  # Shade the area within the credible interval
+  idx <- x >= lower & x <= upper
+  polygon(c(lower, x[idx], upper), c(0, y[idx], 0),
+          col = scales::alpha("red", alpha = 0.1), border = NA)
+
+  # Annotate the credible interval endpoints
+  text(lower, 1e-1, labels = sprintf("%.2f", lower),
+       pos = 4, col = "red")
+  text(upper, 1e-1, labels = sprintf("%.2f", upper),
+       pos = 2, col = "red")
+  mtext(main, side = 3, line = 0.51, adj = 0, cex = 1.8)
+}
+
+
+
+
 
 # solve quantile
 quant <- function(x){quantile(x, prob=c(0.025, 0.5, 0.975))}
@@ -64,7 +424,7 @@ quant <- function(x){quantile(x, prob=c(0.025, 0.5, 0.975))}
 loglik <- function(data, Para.List, yts.minus.xts, slope.Hv.Zg, slope.Au.Rg = 0)
 {
 
-  Nt <- data[[py]]$Nt
+  Nt <- data[[1]]$Nt
   n <- 0
   Py <- length(names(data))
   for(py in 1:Py){
@@ -94,14 +454,9 @@ loglik <- function(data, Para.List, yts.minus.xts, slope.Hv.Zg, slope.Au.Rg = 0)
 }
 
 
-# tapering function
-taper <- function(distance, radius) Wendland(distance, radius, 1, 1)
 
-#
-chunk <- function(x,n)
-{
-  split(x, factor(sort(rank(x)%%n)))
-}
+
+
 
 Xts.beta.fun <- function(tsv.x, alpha, self = FALSE){
   if(!self){
@@ -140,72 +495,12 @@ Xts.beta.fun <- function(tsv.x, alpha, self = FALSE){
 
 
 
-mat_vector_multi <- function(mat, vec)
-{
-  Multi = apply(t(vec), 1, FUN = '%*%', as.matrix(gpuR::t(mat)))
-  return(Multi)
-}
-Empical_Cov_taper <- function(x, y, Taper, sym = F, nThreads = 8){
-  non_zero_index.triu <- t(Matrix::which(Matrix::triu(Taper) != 0, arr.ind = T))
-
-  n <- nrow(x)
-  e <- ncol(x)
-  m <- nrow(y)
-  l <- ncol(non_zero_index.triu)
-  mu_x <- rowMeans(x)
-  mu_y <- rowMeans(y)
-
-  storage.mode(n) <- "integer"
-  storage.mode(m) <- "integer"
-  storage.mode(e) <- "integer"
-  storage.mode(l) <- "integer"
-  storage.mode(x) <- "double"
-  storage.mode(y) <- "double"
-  storage.mode(non_zero_index.triu) <- "integer"
-  storage.mode(mu_x) <- "double"
-  storage.mode(mu_y) <- "double"
-
-  storage.mode(nThreads) <- "integer"
-
-
-  cov.triu <- Empical_Cov_taper_c(x, y, mu_x, mu_y, non_zero_index.triu,
-                                  n, m, e, l, nThreads)$R[, 1]
-
-  # Emp_cov.1 <- spam(0, n, m)
-  if(sym){
-    # tril(Emp_cov) <- cov.triu
-    index <- which(non_zero_index.triu[1, ] != non_zero_index.triu[2,])
-    non_zero_index.triu_2 <- non_zero_index.triu[, index]
-    cov.triu.2 <- cov.triu[index]
-    Emp_cov <- Matrix::sparseMatrix(i = c(non_zero_index.triu[1, ],
-                                          non_zero_index.triu_2[2, ]),
-                                    j = c(non_zero_index.triu[2, ],
-                                          non_zero_index.triu_2[1, ]),
-                                    x = c(cov.triu, cov.triu.2))*Taper
-  }else{
-    non_zero_index.tril <- t(Matrix::which(Matrix::tril(Taper, -1) != 0, arr.ind = T))
-    l <- ncol(non_zero_index.tril)
-    storage.mode(non_zero_index.tril) <- "integer"
-    storage.mode(l) <- "integer"
-
-    cov.tril <- Empical_Cov_taper_c(x, y, mu_x, mu_y, non_zero_index.tril,
-                                    n, m, e, l, nThreads)$R[, 1]
-    Emp_cov <- Matrix::sparseMatrix(i = c(non_zero_index.triu[1, ],
-                                          non_zero_index.tril[1, ]),
-                                    j = c(non_zero_index.triu[2, ],
-                                          non_zero_index.tril[2, ]),
-                                    x = c(cov.triu, cov.tril))*Taper
-  }
-  return(Emp_cov)
-}
-
-
 tranform.list.to.matrix <- function(data, E_inv.sigma.sq = 1, E_inv.obs.delta = 1){
 
 
   name.y <- names(data)
   Py <- length(name.y)
-  Nt <- data[[py]]$Nt
+  Nt <- data[[1]]$Nt
   n <- 0
   for(py in 1:Py){
     n <- n + data[[py]]$n
@@ -214,7 +509,7 @@ tranform.list.to.matrix <- function(data, E_inv.sigma.sq = 1, E_inv.obs.delta = 
   tsv.y <- matrix(NA, nrow = Nt, ncol = n)
 
 
-  tsv.x <- tsv.sx <- tsv.z <- tsv.sz <- list()
+  tsv.x <- tsv.sx <- list()
   if(length(E_inv.obs.delta) < (Nt*Py)){
     E_inv.obs.delta <- matrix(E_inv.obs.delta, nrow = Nt, ncol = Py)
   }
@@ -229,10 +524,7 @@ tranform.list.to.matrix <- function(data, E_inv.sigma.sq = 1, E_inv.obs.delta = 
     tsv.y[t, ] <- as.vector(y)
 
 
-
-    # temp.sz <- Matrix::diag(0)
-
-    temp.x <- temp.z <- temp.sz <- tem.X_ts <- tem.Z_ts <- tem.sZ_ts <- tem.sX_ts <-NULL
+    temp.x <- tem.X_ts <- NULL
     for(py in 1:Py){
       if(!is.null(data[[py]]$X_ts)){
         if(data[[py]]$Px == 1){
@@ -244,54 +536,18 @@ tranform.list.to.matrix <- function(data, E_inv.sigma.sq = 1, E_inv.obs.delta = 
       }
       temp.x <- cbind(temp.x, E_inv.sigma.sq[t, py] * tem.X_ts)
     }
-    for(py in 1:Py){
-      if(!is.null(data[[py]]$Z_ts)){
-        if(data[[py]]$Pz == 1){
-          tem.Z_ts <- matrix(data[[py]]$Z_ts[, t, ], nrow = data[[py]]$n, ncol = 1)
-        }else{
-          tem.Z_ts <- t(data[[py]]$Z_ts[, t, ])
-        }
 
-      }
-      temp.z <- rbind(temp.z, tem.Z_ts)
-    }
-
-
-    for(py in 1:Py){
-      if(!is.null(data[[py]]$sZ_ts)){
-        if(data[[py]]$sPz == 1){
-          tem.sZ_ts <- matrix(0, nrow = n, ncol = 1)
-          tem.sZ_ts[data[[py]]$index.y, ] <- data[[py]]$sZ_ts[1, t, ]
-        }else{
-          tem.sZ_ts <- matrix(0, nrow = n, ncol = dim(data[[py]]$sZ_ts)[[1]])
-          tem.sZ_ts[data[[py]]$index.y, ] <- t(data[[py]]$sZ_ts[, t, ])
-        }
-      }
-      temp.sz <- cbind(temp.sz, tem.sZ_ts)
-    }
 
     if(!is.null(temp.x)){
       tsv.x[[t]] <- spam::as.spam(as.matrix(temp.x))
     }
-    if(!is.null(temp.z)){
-      tsv.z[[t]] <- spam::as.spam(as.matrix(temp.z))
-    }
-    # tsv.sx[[t]] <- spam::as.spam(as.matrix(temp.sx))
-    if(!is.null(temp.sz)){
-      tsv.sz[[t]] <- spam::as.spam(as.matrix(temp.sz))
-    }
+
 
   }
   if(length(tsv.x) == 0){
     tsv.x <- NULL
   }
-  if(length(tsv.z) == 0){
-    tsv.z <- NULL
-  }
-  if(length(tsv.sz) == 0){
-    tsv.sz <- NULL
-  }
-  return(list(tsv.y = tsv.y, tsv.x = tsv.x, tsv.z = tsv.z,  tsv.sz = tsv.sz))
+  return(list(tsv.y = tsv.y, tsv.x = tsv.x))
 }
 
 
@@ -317,19 +573,19 @@ IniEnKF <- function (data, Para.List, test = NULL, IDE = TRUE, Hv.Zg = 0, Au.Rg 
   }
 
   train.H.basis <- list()
-  train.H.basis[[1]] <- data[[1]]$Hs
+  train.H.basis[[1]] <- spam::as.spam(as.matrix(data[[1]]$Hs))
   if(length(data) > 1){
     for(py in 2:length(data)){
-      train.H.basis[[py]] <- data[[py]]$Hs
+      train.H.basis[[py]] <- spam::as.spam(as.matrix(data[[py]]$Hs))
     }
   }
 
   test.H.basis <- list()
   if(!is.null(test)){
-    test.H.basis[[1]] <- test[[1]]$Hs
+    test.H.basis[[1]] <- spam::as.spam(as.matrix(test[[1]]$Hs))
     if(length(data) > 1){
       for(py in 2:length(data)){
-        test.H.basis[[py]] <- test[[py]]$Hs
+        test.H.basis[[py]] <- spam::as.spam(as.matrix(test[[py]]$Hs))
       }
     }
   }
@@ -337,8 +593,8 @@ IniEnKF <- function (data, Para.List, test = NULL, IDE = TRUE, Hv.Zg = 0, Au.Rg 
   # -- transform process
   Mv <- list()
   # term <- c("Intercept", names(Para.List[[1]]$st.RF))
-  if(!is.null(data[[py]]$G_ts)){
-    term <- c(dimnames(data[[py]]$G_ts)[[1]])
+  if(!is.null(data[[1]]$G_ts)){
+    term <- c(dimnames(data[[1]]$G_ts)[[1]])
     for(Pg in 1:(length(term))){
       Mv[[term[Pg]]] <- Para.List[[1]]$st.RF[[term[Pg]]]$rho.v$mu.rho.v
       if(IDE){
@@ -385,42 +641,18 @@ IniEnKF <- function (data, Para.List, test = NULL, IDE = TRUE, Hv.Zg = 0, Au.Rg 
 
 
   yts.minus.xts <- train.data.trans.tsv$tsv.y - Hv.Zg - Au.Rg
-  if(!is.null(data[[py]]$X_ts)){
+  if(!is.null(data[[1]]$X_ts)){
     yts.minus.xts <- train.data.trans.tsv$tsv.y - Xts.beta.fun(
       tsv.x = train.data.trans.tsv$tsv.x,
       alpha = Para.List[[1]]$beta$mu.beta,
       self  = FALSE)
 
-    for(py in 1:length(data)){
-      if(!is.null(data[[py]]$sX_ts)){
-        yts.minus.xts[, data[[py]]$index.y] <- yts.minus.xts[, data[[py]]$index.y] -
-          Xts.beta.fun(tsv.x = data[[py]]$sX_ts,
-                       alpha = Para.List[[py]]$sbeta$mu.beta,
-                       self  = TRUE)
-      }
-    }
-  }else{
-    for(py in 1:length(data)){
-      if(!is.null(data[[py]]$sX_ts)){
-        yts.minus.xts[, data[[py]]$index.y] <- yts.minus.xts[, data[[py]]$index.y] -
-          Xts.beta.fun(tsv.x = data[[py]]$sX_ts,
-                       alpha = Para.List[[py]]$sbeta$mu.beta,
-                       self  = TRUE)
-      }
-    }
+
   }
 
-
   return(list(yts.minus.xts = yts.minus.xts,
-              train.Z.tsv = train.Z.tsv,
-              test.Z.tsv = test.Z.tsv,
-              train.sZ.tsv = train.sZ.tsv,
-              test.sZ.tsv = test.sZ.tsv,
               train.H.basis = train.H.basis,
               test.H.basis = test.H.basis,
-              # ini.alpha.cov = ini.alpha.cov,
-              # alpha.cov = alpha.cov,
-              # Mb = Mb,
               Mv = Mv
   ))
 }
@@ -428,7 +660,7 @@ IniEnKF <- function (data, Para.List, test = NULL, IDE = TRUE, Hv.Zg = 0, Au.Rg 
 make.G.Mat <- function (data = NULL, test = NULL){
   data.G.Mat <- test.G.Mat <- Y.index <- Res.indic <- list()
   if(!is.null(data)){
-    Nt     <- data[[py]]$Nt
+    Nt     <- data[[1]]$Nt
     n      <- 0
     Py     <- length(names(data))
     nKnots <- vector()
@@ -444,16 +676,16 @@ make.G.Mat <- function (data = NULL, test = NULL){
       ID  <- c(ID, paste0("Y", py, ".", dimnames(data[[py]]$Y_ts)[[2]]))
     }
 
-    if(data[[py]]$Pg > 0){
+    if(data[[1]]$Pg > 0){
       pb <- progress::progress_bar$new(format = "pub.G.Mat (train): (:spin) |:bar| :current/:total (:percent in :elapsed)"
-                                       , total = data[[py]]$Pg
+                                       , total = data[[1]]$Pg
                                        , clear = FALSE)
-      for(Pg in 1:data[[py]]$Pg){
+      for(Pg in 1:data[[1]]$Pg){
         pb$tick()
-        Sys.sleep(1 / (2*data[[py]]$Pg))
-        Y.index[[dimnames(data[[py]]$G_ts)[[1]][Pg]]] <- 1:n
-        Res.indic[[dimnames(data[[py]]$G_ts)[[1]][Pg]]] <- 0
-        data.G.Mat[[dimnames(data[[py]]$G_ts)[[1]][Pg]]] <- array(0,
+        Sys.sleep(1 / (2*data[[1]]$Pg))
+        Y.index[[dimnames(data[[1]]$G_ts)[[1]][Pg]]] <- 1:n
+        Res.indic[[dimnames(data[[1]]$G_ts)[[1]][Pg]]] <- 0
+        data.G.Mat[[dimnames(data[[1]]$G_ts)[[1]][Pg]]] <- array(0,
                                                                  dim =  c(Nt, n, nKnots),
                                                                  dimnames = list(time, ID,
                                                                                  paste0("Knots.", 1:nKnots)))
@@ -463,7 +695,7 @@ make.G.Mat <- function (data = NULL, test = NULL){
             # for(py in 1:Py){
             # G_ts <- c(G_ts, as.vector(data[[py]]$G_ts[Pg, t, ]))
             G_ts <- c(as.vector(data[[py]]$G_ts[Pg, t, ]))
-            data.G.Mat[[dimnames(data[[py]]$G_ts)[[1]][Pg]]][t, data[[py]]$index.y,] <- (G_ts*as.matrix(data[[py]]$Hs))
+            data.G.Mat[[dimnames(data[[py]]$G_ts)[[1]][Pg]]][t, data[[py]]$index.y,] <- (G_ts*as.matrix(data[[names(data)[py]]]$Hs))
           }
 
         }
@@ -480,12 +712,14 @@ make.G.Mat <- function (data = NULL, test = NULL){
             Y.index[[paste0(names(data)[py], ".", dimnames(data[[py]]$sG_ts)[[1]][sPg])]] <- data[[py]]$index.y
             pb$tick()
             Sys.sleep(1 / (2*sPG))
-            data.G.Mat[[paste0(names(data)[py], ".", dimnames(data[[py]]$sG_ts)[[1]][sPg])]] <- array(0, dim   =  c(Nt, n, nKnots[py]), dimnames = list(time, ID, paste0("Knots.", 1:nKnots[py])))
+            data.G.Mat[[paste0(names(data)[py], ".", dimnames(data[[py]]$sG_ts)[[1]][sPg])]] <-
+              array(0, dim   =  c(Nt, n, nKnots[py]), dimnames = list(time, ID, paste0("Knots.", 1:nKnots[py])))
             for(t in 1:Nt){
               # G_ts                     <- rep(0, n)
               # G_ts[data[[py]]$index.y] <- as.vector(data[[py]]$sG_ts[sPg, t, ])
               G_ts                     <- as.vector(data[[py]]$sG_ts[sPg, t, ])
-              data.G.Mat[[paste0(names(data)[py], ".", dimnames(data[[py]]$sG_ts)[[1]][sPg])]][t, data[[py]]$index.y,] <- (G_ts*as.matrix(data[[py]]$Hs))
+              data.G.Mat[[paste0(names(data)[py], ".", dimnames(data[[py]]$sG_ts)[[1]][sPg])]][t, data[[py]]$index.y,] <-
+                (G_ts*as.matrix(data[[names(data)[py]]]$Hs))
             }
           }
         }
@@ -527,9 +761,9 @@ make.G.Mat <- function (data = NULL, test = NULL){
             #  G_ts <- NULL
             # G_ts <- c(G_ts, as.vector(test[[py]]$G_ts[Pg, t, ]))
             # for(py in 1:Py){
-            G_ts <- c(as.vector(test[[py]]$G_ts[Pg, t, ]))
-            test.G.Mat[[dimnames(test[[1]]$G_ts)[[1]][Pg]]][t, test[[py]]$index.y, ] <- G_ts*
-              as.matrix(test[[py]]$Hs)
+            G_ts <- c(as.vector(test[[names(test)[py]]]$G_ts[Pg, t, ]))
+            test.G.Mat[[dimnames(test[[1]]$G_ts)[[1]][Pg]]][t, test[[names(test)[py]]]$index.y, ] <- G_ts*
+              as.matrix(test[[names(test)[py]]]$Hs)
           }
 
         }
@@ -552,7 +786,7 @@ make.G.Mat <- function (data = NULL, test = NULL){
               # G_ts                     <- rep(0, n.test)
               # G_ts[test[[py]]$index.y] <- as.vector(test[[py]]$sG_ts[Pg, t, ])
               G_ts <- as.vector(test[[py]]$sG_ts[Pg, t, ])
-              test.G.Mat[[paste0(names(data)[py], ".", dimnames(data[[py]]$sG_ts)[[1]][Pg])]][t,test[[py]]$index.y,] <- G_ts*as.matrix(test[[py]]$Hs) #ini.IEnKF.Input$test.H.basis
+              test.G.Mat[[paste0(names(test)[py], ".", dimnames(test[[names(test)[py]]]$sG_ts)[[1]][Pg])]][t,test[[names(test)[py]]]$index.y,] <- G_ts*as.matrix(test[[names(test)[py]]]$Hs) #ini.IEnKF.Input$test.H.basis
             }
           }
         }
@@ -574,7 +808,7 @@ sfunc <- function(data, Ks, spTaper = NULL, cores = 1, py = 1){
                                 # A <- spam::as.spam.dgCMatrix(spam::tcrossprod.spam(Ks$Vt.ens[t,data[[py]]$Grid.infor$summary$g.index[[1]], ])*spTaper$taper[[1]])
 
                                 s11 <- spam::as.spam(spam::tcrossprod.spam(Ks$Vt.mean[t,
-                                                                                      data[[py]]$Grid.infor$summary$g.index[[1]]])) + spam::as.spam.dgCMatrix(
+                                                                                      data[[py]]$Grid.infor$summary$g.index[[1]]])) + spam::as.spam(
                                                                                         cov(t(Ks$Vt.ens[t, data[[py]]$Grid.infor$summary$g.index[[1]], ]),
                                                                                             t(Ks$Vt.ens[t, data[[py]]$Grid.infor$summary$g.index[[1]], ]))*
                                                                                           Ks$rho.time[paste(0)] *spTaper$taper[[1]]);
@@ -590,7 +824,7 @@ sfunc <- function(data, Ks, spTaper = NULL, cores = 1, py = 1){
                                    for(g in 2:data[[py]]$Grid.infor$summary$res){
                                      s11 <- spam::bdiag.spam(s11,
                                                              spam::tcrossprod.spam(Ks$Vt.mean[t,
-                                                                                              data[[py]]$Grid.infor$summary$g.index[[g]]]) + spam::as.spam.dgCMatrix(
+                                                                                              data[[py]]$Grid.infor$summary$g.index[[g]]]) + spam::as.spam(
                                                                                                 HDCM::Empical_Cov_taper(Ks$Vt.ens[t,data[[py]]$Grid.infor$summary$g.index[[g]], ],
                                                                                                                         Ks$Vt.ens[t,data[[py]]$Grid.infor$summary$g.index[[g]], ],
                                                                                                                         Ks$rho.time[paste(0)] *spTaper$taper[[g]],
@@ -606,23 +840,23 @@ sfunc <- function(data, Ks, spTaper = NULL, cores = 1, py = 1){
                                FUN = function(t){
                                  s10 <- spam::as.spam(spam::tcrossprod.spam(Ks$Vt.mean[t + 1,data[[py]]$Grid.infor$summary$g.index[[1]]],
                                                                             Ks$Vt.mean[t,data[[py]]$Grid.infor$summary$g.index[[1]]])) +
-                                   spam::as.spam.dgCMatrix(
-                                     HDCM::Empical_Cov_taper(Ks$Vt.ens[t + 1,data[[py]]$Grid.infor$summary$g.index[[1]], ],
-                                                             Ks$Vt.ens[t,data[[py]]$Grid.infor$summary$g.index[[1]], ],
-                                                             Ks$rho.time[paste(1)] *spTaper$taper[[1]],
-                                                             sym = F,
-                                                             nThreads = cores));
+                                   spam::as.spam(
+                                     as.matrix(HDCM::Empical_Cov_taper(Ks$Vt.ens[t + 1,data[[py]]$Grid.infor$summary$g.index[[1]], ],
+                                                                      Ks$Vt.ens[t,data[[py]]$Grid.infor$summary$g.index[[1]], ],
+                                                                      Ks$rho.time[paste(1)] *as.matrix(spTaper$taper[[1]]),
+                                                                      sym = F,
+                                                                      nThreads = cores)));
                                  if(data[[py]]$Grid.infor$summary$res > 1){
                                    for(g in 2:data[[py]]$Grid.infor$summary$res){
                                      s10 <- spam::bdiag.spam(s10,
                                                              spam::tcrossprod.spam(Ks$Vt.mean[t + 1,data[[py]]$Grid.infor$summary$g.index[[g]]],
                                                                                    Ks$Vt.mean[t,data[[py]]$Grid.infor$summary$g.index[[g]]]) +
-                                                               spam::as.spam.dgCMatrix(
-                                                                 HDCM::Empical_Cov_taper(Ks$Vt.ens[t + 1,data[[py]]$Grid.infor$summary$g.index[[g]], ],
+                                                               spam::as.spam(
+                                                                 as.matrix(HDCM::Empical_Cov_taper(Ks$Vt.ens[t + 1,data[[py]]$Grid.infor$summary$g.index[[g]], ],
                                                                                          Ks$Vt.ens[t,data[[py]]$Grid.infor$summary$g.index[[g]], ],
-                                                                                         Ks$rho.time[paste(1)] *spTaper$taper[[g]],
+                                                                                         Ks$rho.time[paste(1)] *as.matrix(spTaper$taper[[g]]),
                                                                                          sym = F,
-                                                                                         nThreads = cores))
+                                                                                         nThreads = cores)))
                                      );
                                    }
                                  };
@@ -643,183 +877,132 @@ sfunc <- function(data, Ks, spTaper = NULL, cores = 1, py = 1){
   rm(St_1_0, temp);gc()
 
 
-  #beta.t
-  beta.S11 <- beta.S10 <- beta.S00 <- beta.t00 <- list()
-  # self.beta.S11 <- self.beta.S10 <- self.beta.S00 <- self.beta.t00 <- list()
-  if(dim(Ks$Vt.ens)[[2]] > data[[py]]$nKnots){
-    Pz <- 0
-    if((!is.null(data[[py]]$Z_ts))){
-      Pz <- dim(data[[py]]$Z_ts)[1]
-      ind <-(data[[py]]$Grid.infor$summary$nKnots + 1):(data[[py]]$Pz + data[[py]]$Grid.infor$summary$nKnots)
-      name <- "public.gt"
-      beta.S11[[name]] <- beta.S00[[name]] <- matrix(NA, ncol = 1, nrow = data[[py]]$Pz)
-      beta.S10[[name]] <- beta.t00[[name]] <- matrix(NA, ncol = 1, nrow = data[[py]]$Pz)
-      rownames(beta.S11[[name]]) <-
-        rownames(beta.S10[[name]]) <-
-        rownames(beta.S00[[name]]) <-
-        rownames(beta.t00[[name]]) <-
-        colnames(Ks$Vt.mean[, ind])
 
-
-
-      colnames(beta.S11[[name]]) <- "S11"
-      colnames(beta.S10[[name]]) <- "S10"
-      colnames(beta.S00[[name]]) <- "S00"
-      colnames(beta.t00[[name]]) <- "beta.t00"
-
-      for(pz in 1:data[[py]]$Pz){
-        beta_1_1 <- parallel::mcmapply(seq_len(data[[py]]$Nt + 1),
-                                       FUN = function(t){return(as.vector(tcrossprod(
-                                         Ks$Vt.mean[t, ind[pz]]) +
-                                           var(Ks$Vt.ens[t, ind[pz], ])))},
-                                       SIMPLIFY = F, mc.cores = 1) %>% unlist()
-        beta.S11[[name]][pz, ] <- sum(beta_1_1[-1])
-        beta.S00[[name]][pz, ] <- sum(beta_1_1[-(data[[py]]$Nt + 1)])
-        beta.t00[[name]][pz, ] <- sum(beta_1_1[1])
-      }
-
-      for (pz in 1:data[[py]]$Pz) {
-        beta_1_0 =  parallel::mcmapply(seq_len(data[[py]]$Nt),
-                                       FUN = function(t){return(as.vector(tcrossprod(
-                                         Ks$Vt.mean[t + 1, ind[pz]] *
-                                           Ks$Vt.mean[t, ind[pz]]) +
-                                           cov(Ks$Vt.ens[t + 1, ind[pz], ],
-                                               Ks$Vt.ens[t, ind[pz], ])))},
-                                       SIMPLIFY = F, mc.cores = 1) %>% unlist()
-        beta.S10[[name]][pz, ] <- sum(beta_1_0)
-      }
-
-    }
-
-    for(py in 1:length(names(data))){
-      if((!is.null(data[[py]]$sZ_ts))){
-
-        if(py == 1){
-          sPz.s <- data[[py]]$Grid.infor$summary$nKnots + Pz + 1
-          sPz <- 0
-          ind <- (sPz.s):(dim(data[[py]]$sZ_ts)[[1]] + data[[py]]$Grid.infor$summary$nKnots + Pz)
-
-        }else{
-          ind <- (max(ind) + 1):(sPz + dim(data[[py]]$sZ_ts)[[1]] + data[[py]]$Grid.infor$summary$nKnots + Pz)
-        }
-        sPz <- sPz + dim(data[[py]]$sZ_ts)[[1]]
-
-
-
-        name <- paste0(names(data)[py], ".gt")
-        beta.S11[[name]] <- beta.S00[[name]] <- matrix(NA, ncol = 1, nrow = dim(data[[py]]$sZ_ts)[[1]])
-        beta.S10[[name]] <- beta.t00[[name]] <- matrix(NA, ncol = 1, nrow = dim(data[[py]]$sZ_ts)[[1]])
-        rownames(beta.S11[[name]]) <-
-          rownames(beta.S10[[name]]) <-
-          rownames(beta.S00[[name]]) <-
-          rownames(beta.t00[[name]]) <-
-          colnames(Ks$Vt.mean[, ind])
-
-
-
-        colnames(beta.S11[[name]]) <- "S11"
-        colnames(beta.S10[[name]]) <- "S10"
-        colnames(beta.S00[[name]]) <- "S00"
-        colnames(beta.t00[[name]]) <- "beta.t00"
-
-        for(pz in 1:data[[py]]$sPz){
-          beta_1_1 <- parallel::mcmapply(seq_len(data[[py]]$Nt + 1),
-                                         FUN = function(t){return(as.vector(tcrossprod(
-                                           Ks$Vt.mean[t, ind[pz]]) +
-                                             var(Ks$Vt.ens[t, ind[pz], ])))},
-                                         SIMPLIFY = F, mc.cores = 1) %>% unlist()
-          beta.S11[[name]][pz, ] <- sum(beta_1_1[-1])
-          beta.S00[[name]][pz, ] <- sum(beta_1_1[-(data[[py]]$Nt + 1)])
-          beta.t00[[name]][pz, ] <- sum(beta_1_1[1])
-        }
-
-        for (pz in 1:data[[py]]$sPz) {
-          beta_1_0 =  parallel::mcmapply(seq_len(data[[py]]$Nt),
-                                         FUN = function(t){return(as.vector(tcrossprod(
-                                           Ks$Vt.mean[t + 1, ind[pz]] *
-                                             Ks$Vt.mean[t, ind[pz]]) +
-                                             cov(Ks$Vt.ens[t + 1, ind[pz], ],
-                                                 Ks$Vt.ens[t, ind[pz], ])))},
-                                         SIMPLIFY = F, mc.cores = 1) %>% unlist()
-          beta.S10[[name]][pz, ] <- sum(beta_1_0)
-        }
-
-      }
-    }
-  }
 
   return(S = list(S00 = S00, S11 = S11, S10 = S10,
-                  V.t00 = Pt_1_1[[1]],
-                  beta.S11 = beta.S11, beta.S10 = beta.S10,
-                  beta.S00 = beta.S00,
-                  beta.t00 = beta.t00#, St.10 = St_1_0
+                  V.t00 = Pt_1_1[[1]]
   ))
 }
 
 
 
 non_f_var_alpha <- function(X){
-  Adj.Mat <- exp(-(G/mu.Phi.v[1])) 
+  Adj.Mat <- exp(-(G/mu.Phi.v[1])) # + var.dist^2/mu.Phi.v[2]^2
+  # Adj.Mat <- fields::Wendland(G,
+  #                             theta = mu.Phi.v[1],
+  #                             dimension = 1, k = 1)
+
   mat.x <- as.matrix(var.covariable)
+  # mu.var <- vector()
+  # for(l in 1:nrow(mat.x)){
+  #   mu.var[l] <- as.vector(mat.x[l, ] %*% c(X))^2
+  # }
 
   mu.var <- exp(mat.x %*% c(X))
   Adj.Mat <- mu.tau.sq*solve(diag(as.vector(mu.var^(0.5))) %*% Adj.Mat %*% diag(as.vector(mu.var^(0.5))))
+  # Adj.Mat <- tryCatch({
+  #   mu.tau.sq*solve(diag(as.vector(mu.var^(0.5))) %*% Adj.Mat %*% diag(as.vector(mu.var^(0.5))))
+  # }, error = function(e)print("Error"))
+ # if(length(Adj.Mat) == 1){
+ #   cat("mu.var: ", X, "\n")
+ #   C <- diag(as.vector(mu.var^(0.5))) %*% Adj.Mat %*% diag(as.vector(mu.var^(0.5)))
+ #   diag(C) <- diag(C) + 1E-2
+ #   Adj.Mat <- mu.tau.sq*solve(C)
+ # }
 
-  log.det.D <- Matrix::determinant(Adj.Mat)$modulus/2 
+  log.det.D <- Matrix::determinant(Adj.Mat)$modulus/2 #- 0.5*determinant(LR.coef.prior$sigma.sq)$modulus
 
-  f     <- 
-    (Nt + 1) *log.det.D - (sum(spam::diag.spam(Adj.Mat %*% S11))  +
+  f     <- #-(Nt + 1) *nrow(Adj.Mat)*log(2*pi)/2 +
+    (sub.Nt + 1) *log.det.D - (sum(spam::diag.spam(Adj.Mat %*% S11))  +
                                       sum(spam::diag.spam(Adj.Mat %*% V.t00)) -
                                       2*Rho*sum(spam::diag.spam(Adj.Mat %*% S10)) +
                                       Rho.sq*sum(spam::diag.spam(Adj.Mat %*% S00)))/2 -
-    0.5*matrix(X - LR.coef.prior$mu.delta, nrow = 1) %*% solve(LR.coef.prior$sigma.sq) %*% matrix(X - LR.coef.prior$mu.delta, ncol = 1)
+    # Matrix::determinant(LR.coef.prior$sigma.sq)$modulus/2 -
+    0.5*matrix(X - LR.coef.prior$mu.delta, nrow = 1) %*% solve(LR.coef.prior$sigma.sq) %*%
+    matrix(X - LR.coef.prior$mu.delta, ncol = 1)
   rm(Adj.Mat);
   return(-f)
+}
+
+
+non_f_tau.sq.kl <- function(X){
+  a <- exp(X[1]) + 2.1
+  b <- exp(X[2])
+  E_tau_sq <- b / (a - 1)
+
+  term.1 <- - 0.5*(Upp - Low)* QS.Sum / (1 + E_tau_sq) + 0.5* sub.n*sub.Nt*(log(Low + (Upp - Low)/(1 + E_tau_sq)))
+  term.2 <- -(prior.tau.a - 1) * (log(b) - digamma(a)) - prior.tau.b * a / b
+  term.3 <- (a - 1) * (log(b) - digamma(a)) - a * log(b) + lgamma(a) + a
+  elbo <- term.1 + term.2 + term.3
+  return(-elbo)
 }
 
 
 non_f_range <- function(X){
   Hs.fun <- function(X, residuals, Hdist, sigma.sq, Vt.mean, index.y){
     phi <- exp(X[1])
-    Hs.temp <- exp(-Hdist/phi)
-    Hs <- as(Hs.temp/apply(Hs.temp, 1, sum), "sparseMatrix")
+    Hs.temp <- exp(-1*Hdist/phi)
+    # Hs.temp <- fields::Wendland(Hdist,
+    #                             theta = phi,
+    #                             dimension = 1, k = 1)
+
+    # Hs <- as(Hs.temp/apply(Hs.temp, 1, sum), "sparseMatrix")
+
+    gg <- Hs.temp/apply(Hs.temp, 1, sum)
+    #gg <- sweep(gg, 2, colMeans(gg), "-")
+
+
+    Hs <- as(gg, "sparseMatrix")
     Yt <-  as.vector(residuals[, index.y] - t(Hs %*% t(Vt.mean)))
     return(-Yt%*%Yt/(2*sigma.sq))
   }
 
   phi <- exp(X[1])#/exp(X[2])
   Adj.Mat <- exp(-G/phi)
+  # Adj.Mat <- fields::Wendland(G,
+  #                  theta = phi,
+  #                  dimension = 1, k = 1)
+
 
   mat.x <- as.matrix(var.covariable)
-
-  mu.var  <-  exp(mat.x %*% mu.alpha)
+  # mu.var <- vector()
+  # for(l in 1:nrow(mat.x)){
+  #   mu.var[l] <- as.vector(mat.x[l, ] %*% mu.alpha)^2
+  # }
+  mu.var <- exp(mat.x %*% mu.alpha)
   Adj.Mat <- mu.tau.sq*solve(diag(as.vector(mu.var^(0.5))) %*% Adj.Mat %*% diag(as.vector(mu.var^(0.5))))
   log.det.D <- Matrix::determinant(Adj.Mat)$modulus/2
-
+  # a <- 50
+  # b <- 1
   f     <- Hs.fun(X, residuals, Hdist, sigma.sq, Vt.mean, index.y) -
-    (Nt + 1) *log.det.D - (sum(spam::diag.spam(Adj.Mat %*% S11))  +
+    # (Nt + 1) *nrow(Adj.Mat)*log(2*pi)/2 +
+    (sub.Nt + 1) *log.det.D - (sum(spam::diag.spam(Adj.Mat %*% S11))  +
                                       sum(spam::diag.spam(Adj.Mat %*% V.t00)) -
                                       2*Rho*sum(spam::diag.spam(Adj.Mat %*% S10)) +
-                                      Rho.sq*sum(spam::diag.spam(Adj.Mat %*% S00)))/2 +
-    (prior.Phi.v.a - 1)*log(phi) - X[1]*prior.Phi.v.b
+                                      Rho.sq*sum(spam::diag.spam(Adj.Mat %*% S00)))/2# +
+    # (prior.Phi.v.a - 1)*log(phi) - X[1]*prior.Phi.v.b
+
+    # (prior.Phi.v.a - 1)*(log(exp(X[1])) - 0.5/exp(X[1]) - log(exp(X[2]))) - exp(X[1])*prior.Phi.v.b/exp(X[2])
+  # -
+  #   exp(X[1])*log(exp(X[2])) - (exp(X[1]) - 1)*(log(exp(X[1])) - 0.5/exp(X[1]) - log(exp(X[2]))) +
+  #   exp(X[1]) + log(gamma(exp(X[1])))
+    # log(exp(X[1])) - b*exp(X[1])
 
   rm(Adj.Mat);
   return(-f)
 }
 
 
-plot.lnormal <- function(mu, var, xlab = "x", high = 1, length.out = 1e2){
-  x11 <- qlnorm(1e-8, mu, sqrt(var))
-  x12 <- qlnorm(1 - 1e-8, mu, sqrt(var))
-  x1 <- seq(x11, x12, by = (x12 - x11)/(length.out - 1))
-
-  f1 <- function(x) dlnorm(x, mu, sqrt(var))
-  plot(x1, f1(x1), cex = 2, lwd = 2,
-       ylab = paste0("f(", xlab, ")"), type = "l",
-       xlab = xlab, main = paste0("Density of ", xlab))
-}
-
-
+# plot.lnormal <- function(mu, var, xlab = "x", high = 1, length.out = 1e2){
+#   x11 <- qlnorm(1e-8, mu, sqrt(var))
+#   x12 <- qlnorm(1 - 1e-8, mu, sqrt(var))
+#   x1 <- seq(x11, x12, by = (x12 - x11)/(length.out - 1))
+#
+#   f1 <- function(x) dlnorm(x, mu, sqrt(var))
+#   plot(x1, f1(x1), cex = 2, lwd = 2,
+#        ylab = paste0("f(", xlab, ")"), type = "l",
+#        xlab = xlab, main = paste0("Density of ", xlab))
+# }
 
 
 
@@ -916,6 +1099,12 @@ spT_validation <- function (z = NULL, zhat = NULL, sigma = NULL,
     COE <- 1 - sum(abs(x[[2]] - x[[1]])) / sum(abs(x[[1]] - mean(x[[1]])))
     round(COE, 4)
   }
+  # FAC2 <- function(z, zhat) {
+  #   z <- z %>% as.data.frame() %>% as.vector()
+  #   zhat <- zhat %>% as.data.frame() %>% as.vector()
+  #   index <- !is.na(z)
+  #   round(mean(zhat[index]/z[index]), 4)
+  # }
   ## fraction within a factor of two
   FAC2 <<- function(z, zhat) {
     z <- z %>% as.data.frame() %>% as.matrix() %>% as.vector()
@@ -1170,6 +1359,10 @@ spT_validation <- function (z = NULL, zhat = NULL, sigma = NULL,
   }
 }
 
+
+######################################################################
+#                      plot  scatter
+######################################################################
 Round <- function(x, n = 2)
 {
   return(format(round(x, n), nsmall = n))
