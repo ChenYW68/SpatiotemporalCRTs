@@ -62,7 +62,7 @@ Tan_indices  <- lapply(region_flags[4:5], function(f) which(Tan.Site$flag == f))
 n   <- 250
 Ch  <- rep(50, 5)
 
-start  <- c(1, 300)   # 确保定义存在
+start  <- c(1, 300) 
 px     <- 11
 Y_vars <- c("Y_ts")
 X_vars <- c("Intercept"
@@ -142,15 +142,12 @@ for(cv in 1:1){
   if (!dir.exists(Tab)) {
     dir.create(Tab, recursive = TRUE)
   }
-  #-----------------------------------------
-  # 并行设置
-  #-----------------------------------------
 
   clusterExport(cl, c(
     "Tab", "Cs", "Ne"))
   clusterExport(cl, ls())
   #-----------------------------------------
-  # 并行循环体定义
+
   #-----------------------------------------
   results_list <- parLapply(cl, start[1]:start[2], function(iter) {
     # source(normalizePath("./LoadPackages/RDependPackages.R"))
@@ -172,7 +169,7 @@ for(cv in 1:1){
     start.time <- proc.time()
     set.seed(iter)
 
-    # -------------------- 主体逻辑 --------------------
+    # --------------------  --------------------
     para             <- list(Nt = 5, nugget = 0)
     Simu_data        <- Simu_stData.surface(para)
 
@@ -292,14 +289,14 @@ for(cv in 1:1){
     # Priors and initial parameters
     #-----------------------------------------
     #-----------------------
-    # 1. 基本参数
+    # 1. 
     #-----------------------
     res.num <- G.basic.data[[1]]$Grid.infor$summary$res
     Py <- length(Fixed.effect.Data)
     # Phi.v <- rep(5e1, 5)
 
     #-----------------------
-    # 2. 提取各维度向量
+    # 2. 
     #-----------------------
     Px   <- sapply(Fixed.effect.Data, function(x) if(is.null(x$X_ts)) 0 else nrow(x$X_ts))
     Pz   <- sapply(Fixed.effect.Data, function(x) if(is.null(x$Z_ts)) 0 else nrow(x$Z_ts))
@@ -309,7 +306,7 @@ for(cv in 1:1){
     sPg  <- sapply(Fixed.effect.Data, function(x) if(is.null(x$sG_ts)) 0 else nrow(x$sG_ts))
 
     #-----------------------
-    # 3. Prior 初始化
+    # 3. Prior 
     #-----------------------
     prior <- lapply(seq_len(Py), function(py){
       list(
@@ -342,7 +339,7 @@ for(cv in 1:1){
     names(prior) <- names(Fixed.effect.Data)
 
     #-----------------------
-    # 4. Para.List 初始化
+    # 4. Para.List
     #-----------------------
     Para.List <- lapply(seq_len(Py), function(py){
       ini.sigma.sq <- 1e0
@@ -438,9 +435,6 @@ for(cv in 1:1){
     return(1)
 
   })
-  #-----------------------------------------
-  # 合并结果
-  #-----------------------------------------
 }
 stopCluster(cl)
 
