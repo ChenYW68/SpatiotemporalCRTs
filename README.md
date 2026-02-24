@@ -45,8 +45,7 @@ reduction in outcomes from Year 1 to Year 5.
   <img src="./figure/Fig3_Dist_ATE_all.jpg" width="1000px">
     </p>
   <figcaption>
-  <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas, where results from the VB implemen-
-tation are compared with those obtained via MCMC.
+  <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas, where results from the VB implementation are compared with those obtained via MCMC.
   </figcaption>
 </figure>
 
