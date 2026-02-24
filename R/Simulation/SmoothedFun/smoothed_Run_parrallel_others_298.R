@@ -62,7 +62,7 @@ Tan_indices  <- lapply(region_flags[4:5], function(f) which(Tan.Site$flag == f))
 n   <- 250
 Ch  <- rep(50, 5)
 
-start  <- c(1, 300)   # 确保定义存在
+start  <- c(1, 300)   # 
 px     <- 11
 Y_vars <- c("Y_ts")
 X_vars <- c("Intercept", paste0("CWT_", 1:4), paste0("SBT_", 1:4),
@@ -139,14 +139,14 @@ for(cv in 1:1){
     dir.create(Tab, recursive = TRUE)
   }
   #-----------------------------------------
-  # 并行设置
+  #
   #-----------------------------------------
 
   clusterExport(cl, c(
     "Tab", "Cs", "Ne"))
   clusterExport(cl, ls())
   #-----------------------------------------
-  # 并行循环体定义
+  # 
   #-----------------------------------------
   results_list <- parLapply(cl, start[1]:start[2], function(iter) {
     # source(normalizePath("./LoadPackages/RDependPackages.R"))
@@ -168,7 +168,7 @@ for(cv in 1:1){
     start.time <- proc.time()
     set.seed(iter)
 
-    # -------------------- 主体逻辑 --------------------
+    # --------------------  --------------------
     para             <- list(Nt = 5, nugget = 0)
     Simu_data        <- Simu_stData.surface(para)
 
@@ -260,66 +260,6 @@ for(cv in 1:1){
     JSTVC.subArm.beta, JSTVC.subArm.sd,
     file = paste0(Tab, "/sim_", iter, "_other.RData"))
     return(1)
-    # GRFs <- NULL
-    # for(py in 1:3){
-    #   GRFs <- rbind(GRFs,
-    #                 CV_Ranalysis$all.slope.Hv[[py]][CV_Ranalysis$all.slope.Hv[[py]]$Type == "Fitted GRFs",
-    #                                                 c(3, 4, 5, 17, 18)])
-    #
-    # }
-    # da <- GRFs %>% left_join(sim_Data[, c(5:6, 8, 12)], by = c("LON", "LAT", "time.index"))
-    # da1 <- da[, c(1:3, 4)]
-    # setnames(da1, "intercept.GRF", "W_ts")
-    # da1$Group <- "Prediction"
-    # da2 <- da[, c(1:3, 6)]
-    # da2$Group <- "Simulation"
-    # da <- rbind(da1, da2)
-    # da$time.index <- paste0("time = ", da$time.index)
-    # range(da$W_ts)
-    # da$Group <- ordered(da$Group, levels = c("Simulation", "Prediction"))
-    # p <- ggplot(da, aes(x = LON, y = LAT, col = W_ts), size = 20) +
-    #   geom_tile() +
-    #   geom_point(size = 3) +
-    #   facet_grid(vars(Group), vars(time.index)) +
-    #   scale_color_gradient2(low = "blue", mid = "white",
-    #                         high = "red",
-    #                         midpoint = mean(da$W_ts),
-    #                         limits = c(-0.5, 0.5)) +
-    #   # theme_minimal() +
-    #   labs(#title = 'Random Fields Over Time: Frame {frame}',
-    #     x = 'Longitude',
-    #     y = 'Latitude',
-    #     col = 'Random effects       ') +
-    #   scale_x_continuous(limits = c(34, 35),
-    #                      breaks = seq(34.0, 35, 0.2),
-    #                      labels = paste0(seq(34.0, 35, 0.2))) +
-    #   theme_light() +
-    #   theme(axis.text = element_text(size = 20, colour = "black")
-    #         # ,axis.text.x = element_text(hjust = 0.25, size = 35, colour = "black")
-    #         , axis.title   = element_text(size = 22, colour = "black")
-    #         , legend.title = element_text(size = 22, colour = "black")
-    #         , legend.text  = element_text(size = 20, colour = "black")
-    #         , strip.text   = element_text(size = 22, colour = "black")
-    #         # , legend.title = element_blank()
-    #         , strip.background = element_rect(colour = "grey80", fill = "grey80")
-    #         , legend.background = element_rect(colour = 'transparent', fill = 'transparent')
-    #         , legend.key.width = unit(10,"line")
-    #         , panel.grid.major = element_blank()
-    #         , panel.grid.minor = element_blank()
-    #         , legend.position  =  c("top")##
-    #         # , plot.margin = margin(2, 2, 2, 2, "pt")
-    #         # , legend.margin = margin(0,unit="cm")
-    #         # , legend.margin = margin(10, 10, 10, 10, "pt")
-    #   )
-    # ggsave(p, file = paste0("./figure/Fig4_sim_Wts.pdf"),
-    #        width = 25, height = 10)
   })
-  #-----------------------------------------
-  # 合并结果
-  #-----------------------------------------
 }
 stopCluster(cl)
-# results_list[[1]]$Result$Process.monitoring$VB.spEnKS.Iter$pub.CWT_1
-# results_list[[1]]$Result$Process.monitoring$VB.spEnKS.Iter$Northwestern.obs.sigma.sq
-# Temp <- results_list[[1]]$Result$Process.monitoring$VB.spEnKS.Iter
-# View(Temp)
