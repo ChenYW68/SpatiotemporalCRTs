@@ -28,14 +28,14 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
 </figure>
 
 ## Ranking treatment regimens
-Figure 2 shows ranking results of treatment sequences across methods: (A) The proposed JSTVC; (B) JSTVC without the spatiotemporal random effect;  (C) JSTVC, which mixes DEs and IEs and does not decompose the ATE; and (D) Ranking based on the average
+Figure 2 shows ranking results of treatment sequences across methods: (A) The proposed JSTVC; (B) JSTVC without the spatiotemporal random effect;  (C) JSTVC which mixed DEs and IEs and did not decompose the ATE; and (D) Ranking based on the average
 reduction in outcomes from Year 1 to Year 5. 
 <figure id="Figure4">
   <p align="center">
   <img src="./figure/Fig4_Ranks.jpg" width="1000px">
     </p>
   <figcaption>
-  <strong>Figure 2:</strong> Ranking treatment strategies for six arms in Tanzania. Left panel: Average Treatment Effect (ATE) calculated as the sum of Direct Effects (DEs) and Indirect Effects (IEs) from the proposed JSTVC. Right panel: Average relative reduction of observed outcomes from Year 1 to Year 5.
+  <strong>Figure 2:</strong> Ranking treatment sequences across methods.
   </figcaption>
 </figure>
 
