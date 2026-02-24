@@ -38,13 +38,13 @@ reduction in outcomes from Year 1 to Year 5.
   </figcaption>
 </figure>
 
-## Differences in ATEs between different treatment regimens
+## Differences in ATEs between different treatment sequences
 <figure id="Figure4">
   <p align="center">
   <img src="./figure/Fig3_Dist_ATE_all.jpg" width="800px">
     </p>
   <figcaption>
-  <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between arms are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas, where results from the VB implementation are compared with those obtained via MCMC.
+  <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between treatment sequences are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas, where results from the VB implementation are compared with those obtained via MCMC.
   </figcaption>
 </figure>
 
