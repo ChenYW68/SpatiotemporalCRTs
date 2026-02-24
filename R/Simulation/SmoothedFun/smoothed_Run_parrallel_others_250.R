@@ -58,7 +58,7 @@ Tan_indices  <- lapply(region_flags[4:5], function(f) which(Tan.Site$flag == f))
 n   <- 250
 Ch  <- rep(50, 5)
 
-start  <- c(1, 300)   # 确保定义存在
+start  <- c(1, 300)   # 
 px     <- 11
 Y_vars <- c("Y_ts")
 X_vars <- c("Intercept", paste0("CWT_", 1:4), paste0("SBT_", 1:4),
@@ -135,20 +135,20 @@ for(cv in 1:1){
     dir.create(Tab, recursive = TRUE)
   }
   #-----------------------------------------
-  # 并行设置
+  # 
   #-----------------------------------------
 
   clusterExport(cl, c(
     "Tab", "Cs", "Ne"))
   clusterExport(cl, ls())
   #-----------------------------------------
-  # 并行循环体定义
+  # 
   #-----------------------------------------
   results_list <- parLapply(cl, start[1]:start[2], function(iter) {
     start.time <- proc.time()
     set.seed(iter)
 
-    # -------------------- 主体逻辑 --------------------
+    # --------------------  --------------------
     para             <- list(Nt = 5)
     Simu_data        <- Simu_stData.surface(para)
 
