@@ -28,9 +28,9 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
 </figure>
 
 ## Ranking treatment regimens
-<figure id="Figure4">
+<figure id="Figure5">
   <p align="center">
-  <img src="./figure/Fig4_Ranks.jpg" width="800px">
+  <img src="./figure/Fig5_Ranks.jpg" width="800px">
     </p>
   <figcaption>
   <strong>Figure 2:</strong> Ranking treatment sequences across methods: (A) The proposed JSTVC; (B) JSTVC without the spatiotemporal random effect;  (C) JSTVC which mixed DEs and IEs and did not decompose the ATE; and (D) Ranking based on the average
@@ -39,9 +39,9 @@ reduction in outcomes from Year 1 to Year 5.
 </figure>
 
 ## Differences in ATEs between different treatment sequences
-<figure id="Figure4">
+<figure id="Figure6">
   <p align="center">
-  <img src="./figure/Fig3_Dist_ATE_all.jpg" width="800px">
+  <img src="./figure/Fig6_Dist_ATE_all.jpg" width="800px">
     </p>
   <figcaption>
   <strong>Figure 3:</strong> Posterior distributions of differences in Average Treatment Effects (ATEs) between treatment sequences are computed using the proposed JSTVC, with 95% credible intervals (CIs) highlighted by shaded areas, where results from the VB implementation are compared with those obtained via MCMC.
