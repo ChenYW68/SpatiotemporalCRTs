@@ -27,7 +27,7 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
   </figcaption>
 </figure>
 
-## Ranking treatment regimens
+## Ranking treatment sequences
 <figure id="Figure5">
   <p align="center">
   <img src="./figure/Fig5_Ranks.jpg" width="800px">
