@@ -54,11 +54,12 @@ clusterExport(cl, c( "Ken_indices",
 ))
 
 clusterEvalQ(cl, {
+  Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
   source(normalizePath("./JSTVC/R/util.R"))
   source(normalizePath("./JSTVC/R/sim_Generate_Data.R"))
 })
 
-Tab <- paste0("./result/Simulation_300/random_competing_n_", 250)
+Tab <- paste0("./result/Simulation/random_competing_n_", 250)
 if (!dir.exists(Tab)) {
   dir.create(Tab, recursive = TRUE)
 }

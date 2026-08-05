@@ -1,16 +1,31 @@
+#' Run the ensemble Kalman filter
+#'
+#' @param data Input data object.
+#' @param yts.minus.xts Response residual matrix after fixed effects.
+#' @param Para.List Model parameter list.
+#' @param H Observation mapping matrix or array.
+#' @param Mv State transition specification.
+#' @param spTaper Spatial tapering object.
+#' @param slope.G.mat Logical; whether `H` varies over time.
+#' @param ct Temporal taper or carry-forward lag.
+#' @param Ne Number of ensemble members.
+#' @param var.name Variable name used for the state component.
+#' @param mu.sigma.sq Observation variance values.
+#' @param inv.mu.sigma.sq Inverse observation variance values.
+#' @param Py Response index.
 EnKF <- function(data,
-                       yts.minus.xts,
-                       Para.List,
-                       H,
-                       Mv,
-                       spTaper,
-                       slope.G.mat    = FALSE,
-                       ct             = 1,
-                       Ne             = 100,
-                       var.name       = "Intercept",
-                       mu.sigma.sq    = 1,
-                       inv.mu.sigma.sq = 1,
-                       Py             = 0){
+                 yts.minus.xts,
+                 Para.List,
+                 H,
+                 Mv,
+                 spTaper,
+                 slope.G.mat = FALSE,
+                 ct = 1,
+                 Ne = 100,
+                 var.name = "Intercept",
+                 mu.sigma.sq = 1,
+                 inv.mu.sigma.sq = 1,
+                 Py = 0) {
   # cat("***************************************************************** \n")
   # cat("                Start to execute EnKF! \n\n")
   # cat("*-----------------------------------------------------------\n")

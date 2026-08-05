@@ -35,7 +35,7 @@ Tan_indices  <- lapply(region_flags[4:5], function(f) which(Tan.Site$flag == f))
 # Simulation parameters
 #-----------------------------------------
 start   <- c(1, 300)
-cl      <- makeCluster(15)
+cl      <- makeCluster(20)
 clusterExport(cl, "pkgs")
 clusterEvalQ(cl, {
   lapply(pkgs, require, character.only = TRUE)
@@ -53,6 +53,7 @@ clusterExport(cl, c( "Ken_indices",
 ))
 
 clusterEvalQ(cl, {
+  Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
   source(normalizePath("./JSTVC/R/regCreateGridm.R"))
   source(normalizePath("./JSTVC/R/Partitioning.Datasets.R"))
   source(normalizePath("./JSTVC/R/Construct.Fixed.effect.Data.R"))
@@ -65,7 +66,7 @@ clusterEvalQ(cl, {
 })
 
 for(cv in 1:1){
-  Tab <- paste0("./result/Simulation_300/random_JSTVC_n_", 250, "_Ne_", 300)
+  Tab <- paste0("./result/Simulation/random_JSTVC_IE_n_", 250)
   if (!dir.exists(Tab)) {
     dir.create(Tab, recursive = TRUE)
   }
@@ -94,15 +95,10 @@ for(cv in 1:1){
 
     simData   <- Simu_stData(para = sim.para,
                              loc  = Simu_data$loc,
-                             W_ts = Simu_data$W_ts,
+                             W_ts = Simu_data$W_ts - mean(Simu_data$W_ts),
                              X    = sim.para$X)
     sim_Data  <- data.collect(simData, sim.para)
 
-    # Wether use miss-specifications for decay function
-    # if(misspecified_decay){
-    #   sim_Data$IEt.CWT <- Score_Data[ind.x, ]$IEt.CWT.exp
-    #   sim_Data$IEt.SBT <- Score_Data[ind.x, ]$IEt.SBT.exp
-    # }
 
     Train.village.ID <- unique(sim_Data$Village_ID[sim_Data$Simu == "Train"])
     sim_Data$n.size  <- length(Train.village.ID)
@@ -160,7 +156,6 @@ for(cv in 1:1){
         R.sqrt          = 0,
         site.id         = "Village_ID",
         ch              = 50,
-        method          = "Wenland",
         H.Grid_dist     = if(r <= 3) Kenya.Dist.c[Ken_indices[[r]], Ken_indices[[r]]] else Tanzania.Dist.c[Tan_indices[[r - 3]], Tan_indices[[r - 3]]],
         var.covariable  = Var.variables[, -1]
       )
@@ -250,7 +245,7 @@ for(cv in 1:1){
                           CV                = TRUE,
                           Object            = "Flag",
                           transf.Response   = "normal",
-                          plot              = TRUE,
+                          plot              = FALSE,
                           Ne                = 300,
                           tol.real          = 1e-5,
                           itMin             = 1e2,

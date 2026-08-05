@@ -35,8 +35,7 @@ Ken_indices  <- lapply(region_flags[1:3], function(f) which(Ken.Site$flag == f))
 Tan_indices  <- lapply(region_flags[4:5], function(f) which(Tan.Site$flag == f))
 #-----------------------------------------
 start  <- c(1, 300)
-n.cores <- 15
-cl      <- makeCluster(n.cores)
+cl      <- makeCluster(20)
 clusterExport(cl, "pkgs")
 clusterEvalQ(cl, {
   lapply(pkgs, require, character.only = TRUE)
@@ -54,11 +53,12 @@ clusterExport(cl, c( "Ken_indices",
 ))
 
 clusterEvalQ(cl, {
+  Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
   source(normalizePath("./JSTVC/R/util.R"))
   source(normalizePath("./JSTVC/R/sim_Generate_Data.R"))
 })
 
-Tab <- paste0("./result/Simulation_300/misspecified_x_random_competing_n_", 250)
+Tab <- paste0("./result/Simulation/misspecified_x_random_competing_n_", 250)
 if (!dir.exists(Tab)) {
   dir.create(Tab, recursive = TRUE)
 }

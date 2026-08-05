@@ -1,33 +1,61 @@
 ###########################################################################
 #                                   Create Y_ts/X_ts
 ###########################################################################
+#' Construct fixed-effect data objects
+#'
+#' @param data Input data set.
+#' @param include Time-window filter specification.
+#' @param Y Response variable name.
+#' @param X Names of shared covariates.
+#' @param R Names of spatial random-effect covariates.
+#' @param Z Names of additional covariates.
+#' @param G Names of spatiotemporal random-effect covariates.
+#' @param sX Names of self covariates.
+#' @param sR Names of self spatial random-effect covariates.
+#' @param sZ Names of self additional covariates.
+#' @param sG Names of self spatiotemporal random-effect covariates.
+#' @param date_time Date-time column name.
+#' @param siteid Site identifier column name.
+#' @param start.time Starting time value.
+#' @param standard Logical; whether to standardize variables.
+#' @param center Logical; whether to center variables.
+#' @param start.index Starting index for time.
+#' @param initial.miss Optional initial missingness matrix or indicator.
+#' @param scaled.variable.x Variables in `X` to scale.
+#' @param scaled.variable.r Variables in `R` to scale.
+#' @param scaled.variable.z Variables in `Z` to scale.
+#' @param scaled.variable.g Variables in `G` to scale.
+#' @param scaled.variable.sx Variables in `sX` to scale.
+#' @param scaled.variable.sr Variables in `sR` to scale.
+#' @param scaled.variable.sz Variables in `sZ` to scale.
+#' @param scaled.variable.sg Variables in `sG` to scale.
 Construct.Fixed.effect.Data <- function(data = NULL,
-                                include = list(YEAR = c(2015),
-                                               month_day = c("01-01", "12-31")),
-                                Y = "PM25",
-                                X = NULL,
-                                R = NULL,
-                                Z = NULL,
-                                G = NULL,
-                                sX = NULL,
-                                sR = NULL,
-                                sZ = NULL,
-                                sG = NULL,
-                                date_time = "DATE_TIME",
-                                siteid = "ID",
-                                start.time = 0,
-                                standard = F,
-                                center = F,
-                                start.index = 1,
-                                initial.miss = NULL,
-                                scaled.variable.x = NULL,
-                                scaled.variable.r = NULL,
-                                scaled.variable.z = NULL,
-                                scaled.variable.g = NULL,
-                                scaled.variable.sx = NULL,
-                                scaled.variable.sr = NULL,
-                                scaled.variable.sz = NULL,
-                                scaled.variable.sg = NULL)
+                                        include = list(YEAR = c(2015),
+                                                       month_day = c("01-01", "12-31")),
+                                        Y = "PM25",
+                                        X = NULL,
+                                        R = NULL,
+                                        Z = NULL,
+                                        G = NULL,
+                                        sX = NULL,
+                                        sR = NULL,
+                                        sZ = NULL,
+                                        sG = NULL,
+                                        date_time = "DATE_TIME",
+                                        siteid = "ID",
+                                        start.time = 0,
+                                        standard = FALSE,
+                                        center = FALSE,
+                                        start.index = 1,
+                                        initial.miss = NULL,
+                                        scaled.variable.x = NULL,
+                                        scaled.variable.r = NULL,
+                                        scaled.variable.z = NULL,
+                                        scaled.variable.g = NULL,
+                                        scaled.variable.sx = NULL,
+                                        scaled.variable.sr = NULL,
+                                        scaled.variable.sz = NULL,
+                                        scaled.variable.sg = NULL)
 {
   if (is.null(data)) { stop("Must provide data.\n")}
   setDT(data)

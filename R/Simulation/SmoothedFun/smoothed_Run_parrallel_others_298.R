@@ -2,41 +2,19 @@
 # Clear workspace and load environment
 #-----------------------------------------
 rm(list = ls())
-library(parallel)
-library(data.table)
-library(dplyr)
 source("./LoadPackages/RDependPackages.R")
-# Packages to load
 pkgs <- c(
   "data.table",
-  "ggplot2",
-  "plyr",
   "parallel",
-  "sqldf",
-  "numDeriv",
   "lubridate",
   "dplyr",
   "Hmisc",
-  "MASS",
   "tidyr",
-  "RColorBrewer",
-  "progress",
   "fields",
   "ranger",
-  "MBA",
-  "Rcpp",
-  "writexl",
-  "readxl",
-  "ggmap",
-  "verification",
-  "mapproj",
-  "sp",
   "mvnfast",
-  "INLA",
   "spam",
-  "scoringutils",
-  "HDCM",
-  "rARPACK"
+  "INLA"
 )
 #-----------------------------------------
 # Load data
@@ -44,7 +22,6 @@ pkgs <- c(
 load("./data/Kenya_Score_Data_r.RData")
 Ken.Site <- Site
 Ken.G    <- G.mat
-
 load("./data/Tanzania_Score_Data_r.RData")
 Tan.Site <- Site
 Tan.G    <- G.mat
@@ -55,39 +32,12 @@ Site     <- rbind(Ken.Site, Tan.Site)
 region_flags <- c("Northwestern", "Northeastern", "Southern", "Western", "Eastern")
 Ken_indices  <- lapply(region_flags[1:3], function(f) which(Ken.Site$flag == f))
 Tan_indices  <- lapply(region_flags[4:5], function(f) which(Tan.Site$flag == f))
-
 #-----------------------------------------
 # Simulation parameters
 #-----------------------------------------
-n   <- 250
-Ch  <- rep(50, 5)
-
-start  <- c(1, 300)   # 
-px     <- 11
-Y_vars <- c("Y_ts")
-X_vars <- c("Intercept", paste0("CWT_", 1:4), paste0("SBT_", 1:4),
-            "spillover.CWT", "spillover.SBT")
-
-grid <- rbind(expand.grid(
-  # ch = seq(20, 100, by = 30),
-  # cs = 50,#seq(20, 50, by = 5), #50, 300
-  # cs = seq(50, 300, by = 50),
-  ne = seq(50, 500, by = 10)
-)
-# , data.frame(cs = c(150, 200, 250, 300),
-#              ne = c(500, 500, 500, 500))
-)
-
-
-
-n.cores <- 15
-# n.cores <- parallel::detectCores() - 1
-
-cl      <- makeCluster(n.cores)
-# Assuming you have a cluster created, e.g.,
-# cl <- makeCluster(detectCores())
+start   <- c(1, 300)
+cl      <- makeCluster(20)
 clusterExport(cl, "pkgs")
-# Load all packages on all cluster nodes
 clusterEvalQ(cl, {
   lapply(pkgs, require, character.only = TRUE)
 })
@@ -99,90 +49,47 @@ clusterExport(cl, c( "Ken_indices",
                      "Ken.G",
                      "Tan.G",
                      "region_flags",
-                     "n",
-                     "Ch",
-                     # "Cs",
-                     # "Ne",
-                     "px",
-                     "Y_vars",
-                     "X_vars",
                      "Kenya_Score_Data",
                      "Tanzania_Score_Data"
 ))
 
 clusterEvalQ(cl, {
-  source(normalizePath("./nSTJVC/R/regCreateGridm2.R"))
-  source(normalizePath("./nSTJVC/R/Partitioning.Datasets.R"))
-  source(normalizePath("./nSTJVC/R/Construct.Fixed.effect.Data.R"))
-  source(normalizePath("./nSTJVC/R/util_08_10.R"))
-
-  source(normalizePath("./nSTJVC/R/VB.Laplace_08_10.R"))
-  # source(normalizePath("./nSTJVC/MCMC/MCMC.R"))
-
-
-  source(normalizePath("./nSTJVC/R/VB.LA.spAugEnKS.R"))
-  source(normalizePath("./nSTJVC/R/spAugEnKS.R"))
-  source(normalizePath("./nSTJVC/R/JSTVCs.R"))
-  source(normalizePath("./simulation/sim_Generate_Data.R"))
+  Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
+  source(normalizePath("./JSTVC/R/regCreateGridm.R"))
+  source(normalizePath("./JSTVC/R/Partitioning.Datasets.R"))
+  source(normalizePath("./JSTVC/R/Construct.Fixed.effect.Data.R"))
+  source(normalizePath("./JSTVC/R/util.R"))
+  source(normalizePath("./JSTVC/R/VB.R"))
+  source(normalizePath("./JSTVC/R/VB_EnKF.R"))
+  source(normalizePath("./JSTVC/R/EnKF.R"))
+  source(normalizePath("./JSTVC/R/JSTVCs.R"))
+  source(normalizePath("./JSTVC/R/sim_Generate_Data.R"))
 })
 
-# stopCluster(cl)#nrow(grid)
 for(cv in 1:1){
-  Cs  <- rep(1e15, 5) #grid$cs[cv]
-  Ne  <- 300#grid$ne[cv]
-  Tab <- paste0("./Result/Simulation/VB/smoothed_other_n_", n,
-                "_Ch_", Ch[1],
-                "_Cs_", Cs[1],
-                "_Ne_", Ne)
+  Tab <- paste0("./result/Simulation/smoothed_competing_n_", 298)
 
   if (!dir.exists(Tab)) {
     dir.create(Tab, recursive = TRUE)
   }
-  #-----------------------------------------
-  #
-  #-----------------------------------------
 
-  clusterExport(cl, c(
-    "Tab", "Cs", "Ne"))
+  clusterExport(cl, c("Tab"))
   clusterExport(cl, ls())
-  #-----------------------------------------
-  # 
-  #-----------------------------------------
+
   results_list <- parLapply(cl, start[1]:start[2], function(iter) {
-    # source(normalizePath("./LoadPackages/RDependPackages.R"))
-    # source(normalizePath("./nSTJVC/R/regCreateGridm2.R"))
-    # source(normalizePath("./nSTJVC/R/Partitioning.Datasets.R"))
-    # source(normalizePath("./nSTJVC/R/Construct.Fixed.effect.Data.R"))
-    # source(normalizePath("./nSTJVC/R/util_08_10.R"))
-    #
-    # source(normalizePath("./nSTJVC/R/VB.Laplace_08_10.R"))
-    # # source(normalizePath("./nSTJVC/MCMC/MCMC.R"))
-    #
-    #
-    # source(normalizePath("./nSTJVC/R/VB.LA.spAugEnKS.R"))
-    # source(normalizePath("./nSTJVC/R/spAugEnKS.R"))
-    # source(normalizePath("./nSTJVC/R/JSTVCs.R"))
-    # source(normalizePath("./simulation/sim_Generate_Data.R"))
-    # py <- 1
 
     start.time <- proc.time()
     set.seed(iter)
-
     # --------------------  --------------------
     para             <- list(Nt = 5, nugget = 0)
     Simu_data        <- Simu_stData.surface(para)
-
-
-    # simData.DataBase <- Simu_data$sim.Wts
     Score_Data       <- rbind(Kenya_Score_Data, Tanzania_Score_Data)
-
     ind.x            <- unlist(lapply(region_flags, function(f) which(Score_Data$flag == f)))
-
     sim.para <- list(
-      n      = 250,
+      n      = 298,
       Nt     = 5,
-      px     = px,
-      alpha  = c(5, rep(-1, px - 1)),
+      px     = 11,
+      alpha  = c(5, rep(-1, 10)),
       nugget = 1e-2,
       X      = Score_Data[ind.x, c(2, 9:16, 19:20)]
     )
@@ -258,8 +165,9 @@ for(cv in 1:1){
     save(JSTVC.nonEffect.beta, JSTVC.nonEffect.sd,
     JSTVC.subRegion.beta, JSTVC.subRegion.sd,
     JSTVC.subArm.beta, JSTVC.subArm.sd,
-    file = paste0(Tab, "/sim_", iter, "_other.RData"))
+    file = paste0(Tab, "/sim_", iter, ".RData"))
     return(1)
+
   })
 }
 stopCluster(cl)

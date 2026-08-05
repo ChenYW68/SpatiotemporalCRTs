@@ -1,9 +1,17 @@
 ######################################################################
 ######################################################################
+#' Partition training and testing data sets
+#'
+#' @param G.basic.data Grid and basis information.
+#' @param Fixed.effect.Data Fixed-effect data objects.
+#' @param Object Grouping variable name.
+#' @param num Group index to hold out.
+#' @param siteid Site identifier column name.
 Partitioning.Dataset <- function(G.basic.data,
-                                     Fixed.effect.Data,
-                                     Object = "Object", num = 1,
-                                     siteid = "ID"){
+                                 Fixed.effect.Data,
+                                 Object = "Object",
+                                 num = 1,
+                                 siteid = "ID") {
   # Hs = G.basic.data$Hs;
 
 

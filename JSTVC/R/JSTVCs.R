@@ -1,3 +1,29 @@
+#' Fit the JSTVC model
+#'
+#' @param Fixed.effect.Data Fixed-effect data objects.
+#' @param G.basic.data Grid and basis information.
+#' @param center.y Logical; whether to center the response.
+#' @param scale.y Logical; whether to scale the response.
+#' @param Object Grouping variable used for partitioning or prediction.
+#' @param Obj.Seq Sequence index of the selected group.
+#' @param CV Logical; whether to perform cross-validation.
+#' @param prior Prior specification list.
+#' @param Para.List Initial parameter list.
+#' @param verbose Logical; whether to print progress messages.
+#' @param verbose.VB Logical; whether to print VB-specific progress messages.
+#' @param transf.Response Response transformation option.
+#' @param save.Predict Logical; whether to save predictions.
+#' @param Ne Number of ensemble members.
+#' @param cs Spatial tapering range.
+#' @param ct Temporal lag parameter.
+#' @param n.cores Number of CPU cores to use.
+#' @param itMin Minimum number of iterations.
+#' @param itMax Maximum number of iterations.
+#' @param tol.real Convergence tolerance.
+#' @param seed Random seed.
+#' @param plot Logical; whether to create plots.
+#' @param positive Logical; whether to enforce positivity.
+#' @param MCMC Logical; whether to use the MCMC routine.
 JSTVC <- function(Fixed.effect.Data,
                  G.basic.data,
                  center.y        = FALSE,
@@ -7,7 +33,6 @@ JSTVC <- function(Fixed.effect.Data,
                  CV              = TRUE,
                  prior           = NULL,
                  Para.List       = NULL,
-                 true.Para.List  = NULL,
                  verbose         = TRUE,
                  verbose.VB      = TRUE,
                  transf.Response = c("normal"),
@@ -22,8 +47,7 @@ JSTVC <- function(Fixed.effect.Data,
                  seed            = 1234,
                  plot            = TRUE,
                  positive        = TRUE,
-                 MCMC            = FALSE,
-                 threshold = c(0.5, 0.5))
+                 MCMC            = FALSE)
 {
   call <- match.call()
 
@@ -166,12 +190,11 @@ JSTVC <- function(Fixed.effect.Data,
         Sub.Varying.Ch          = G.basic.data[[py]]$Sub.Varying.Ch)
     }
       names(data) <- names(Fixed.effect.Data)
-      cat("Oject(dataset): All data are used to fit JSTVCs ...\n")
+      cat("Object(dataset): All data are used to fit JSTVCs ...\n")
       CV.Re <- .VB.EnKF(data            = data,
                              test            = NULL,
                              prior           = prior,
                              Para.List       = Para.List,
-                             true.Para.List  = NULL,
                              center.y        = center.y,
                              scale.y         = scale.y,
                              Object          = "ALL",
@@ -205,7 +228,6 @@ JSTVC <- function(Fixed.effect.Data,
                        test            = GSD$test,
                        prior           = prior,
                        Para.List       = Para.List,
-                       true.Para.List  = NULL,
                        center.y        = center.y,
                        scale.y         = scale.y,
                        Object          = GSD$Object,

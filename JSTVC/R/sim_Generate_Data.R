@@ -1,10 +1,16 @@
-Simu_stData.surface <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NULL, X = 0){
+#' Simulate smoothed surface spatiotemporal data
+#'
+#' @param para Simulation parameter list.
+#' @param loc Location data.
+#' @param W_ts Latent spatiotemporal process matrix.
+#' @param X Covariate data or design specification.
+Simu_stData.surface <- function(para = NULL, loc = NULL, W_ts = NULL, X = 0){
   time <- seq(0, 1,, para$Nt)
   TRUE.Y_ts <- sim.Wts <- NULL
 
   if(is.null(loc)){
     Y_ts <-  X_ts <- NULL
-    load("./data/smoothed_surface.rds")
+    load("./data/smoothed_surface.RData")
 
     for(r in 1:5){
       temp <- simData.DataBase[[r]]$reg.Site
@@ -53,9 +59,9 @@ Simu_stData.surface <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NU
     for(r in 1:length(as.character(unique(loc$flag)))){
       Village_ID <- loc[loc$flag %in% unique(loc$flag)[r], ]$Village_ID
 
-      id <- c(id, sample(Village_ID, para$n*length(Village_ID)/nrow(loc), replace = F))
+      id <- c(id, sample(Village_ID, para$n * length(Village_ID) / nrow(loc), replace = FALSE))
       if(r == length(as.character(unique(loc$flag)))){
-        id <- c(id, sample(Village_ID, para$n - length(id), replace = F))
+        id <- c(id, sample(Village_ID, para$n - length(id), replace = FALSE))
       }
     }
 
@@ -109,8 +115,13 @@ Simu_stData.surface <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NU
   return(re)
 }
 
-
-Simu_stData <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NULL, X = 0){
+#' Simulate spatiotemporal data
+#'
+#' @param para Simulation parameter list.
+#' @param loc Location data.
+#' @param W_ts Latent spatiotemporal process matrix.
+#' @param X Covariate data or design specification.
+Simu_stData <- function(para = NULL, loc = NULL, W_ts = NULL, X = 0){
 
 
   time <- seq(0, 1,, para$Nt)
@@ -118,7 +129,7 @@ Simu_stData <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NULL, X = 
 
   if(is.null(loc)){
     Y_ts <-  X_ts <- NULL
-    load("./data/sim.Cov.Data.rds")
+    load("./data/sim.Cov.Data.RData")
     for(r in 1:5){
 
       D <- chol(sim.Cov.Data[[r]]$reg.cov_matrix)
@@ -147,9 +158,9 @@ Simu_stData <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NULL, X = 
     for(r in 1:length(as.character(unique(loc$flag)))){
       Village_ID <- loc[loc$flag %in% unique(loc$flag)[r], ]$Village_ID
       # cat("...", length(Village_ID), "\n")
-      id <- c(id, sample(Village_ID, para$n*length(Village_ID)/nrow(loc), replace = F))
+      id <- c(id, sample(Village_ID, para$n * length(Village_ID) / nrow(loc), replace = FALSE))
       if(r == length(as.character(unique(loc$flag)))){
-        id <- c(id, sample(Village_ID, para$n - length(id), replace = F))
+        id <- c(id, sample(Village_ID, para$n - length(id), replace = FALSE))
       }
     }
 
@@ -206,7 +217,10 @@ Simu_stData <- function(para =NULL, loc = NULL, W_ts = NULL, alphat = NULL, X = 
   return(re)
 }
 
-
+#' Collect simulated data into a long-format table
+#'
+#' @param simData Simulated data object.
+#' @param sim.para Simulation parameter list.
 data.collect <- function(simData, sim.para){
   simData.DataBase <- data.table(
     Village_ID = as.vector(t(matrix(simData$loc$Village_ID,

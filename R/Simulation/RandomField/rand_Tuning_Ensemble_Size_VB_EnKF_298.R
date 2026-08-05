@@ -53,6 +53,7 @@ clusterExport(cl, c("Ken_indices",
                     "Tanzania_Score_Data"))
 
 clusterEvalQ(cl, {
+  Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
   source(normalizePath("./JSTVC/R/regCreateGridm.R"))
   source(normalizePath("./JSTVC/R/Partitioning.Datasets.R"))
   source(normalizePath("./JSTVC/R/Construct.Fixed.effect.Data.R"))
@@ -66,7 +67,7 @@ clusterEvalQ(cl, {
 
 for(cv in 1:length(grid$ne)){
   Ne  <- grid$ne[cv]
-  Tab <- paste0("./result/Simulation_300/random_JSTVC_n_", 298, "_Ne_", Ne)
+  Tab <- paste0("./result/Simulation/random_JSTVC_n_", 298, "_Ne_", Ne)
 
   if (!dir.exists(Tab)) {
     dir.create(Tab, recursive = TRUE)
@@ -155,7 +156,6 @@ for(cv in 1:length(grid$ne)){
         R.sqrt          = 0,
         site.id         = "Village_ID",
         ch              = 50,
-        method          = "Wenland",
         H.Grid_dist     = if(r <= 3) Kenya.Dist.c[Ken_indices[[r]], Ken_indices[[r]]] else Tanzania.Dist.c[Tan_indices[[r - 3]], Tan_indices[[r - 3]]],
         var.covariable  = Var.variables[, -1]
       )

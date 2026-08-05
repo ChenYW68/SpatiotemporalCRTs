@@ -1,14 +1,27 @@
-.VB <- function (data            = NULL,
-                 Hv.Zg           = 0,
-                 data.trans.tsv  = NULL,
-                 Ks              = NULL,
-                 S               = NULL,
-                 prior           = NULL,
-                 Para.List       = NULL,
-                 verbose.VB      = FALSE,
-                 test            = NULL,
-                 Ne              = NULL,
-                 iter            = 0){
+#' Run the MCMC approximation routine
+#'
+#' @param data Input data object.
+#' @param Hv.Zg Current fitted spatiotemporal effect.
+#' @param data.trans.tsv Transformed stacked data object.
+#' @param Ks State ensemble summaries.
+#' @param S State covariance summaries.
+#' @param prior Prior specification list.
+#' @param Para.List Current parameter list.
+#' @param verbose.VB Logical; whether to print detailed iteration output.
+#' @param test Optional test data object.
+#' @param Ne Number of ensemble members.
+#' @param iter Iteration index.
+.VB <- function(data = NULL,
+                Hv.Zg = 0,
+                data.trans.tsv = NULL,
+                Ks = NULL,
+                S = NULL,
+                prior = NULL,
+                Para.List = NULL,
+                verbose.VB = FALSE,
+                test = NULL,
+                Ne = NULL,
+                iter = 0) {
   options(warn = -1)
   cat(paste0("\n***************************************************************** \n"))
   cat(paste0("*\n"))
@@ -28,8 +41,6 @@
 
   #  beta ----
   if(!is.null(data[[names(data)[[1]]]]$X_ts)){
-    #update varPhi
-    # Para.List[[names(data)[[1]]]]$beta$pub.post.prob <- list()
     if(is.null(Para.List[[names(data)[[1]]]]$beta$gamma[1])){
       Para.List[[names(data)[[1]]]]$beta$gamma <- vector()
       for(px in 1:data[[names(data)[[1]]]]$Px){
@@ -48,12 +59,9 @@
     X.names <- dimnames(data[[names(data)[[1]]]]$X_ts)[[1]]
     Sigma.alpha <- prior[[names(data)[[1]]]]$beta$sigma.sq
 
-
-    # if(is.na(Para.List[[names(data)[[1]]]]$beta$mu.beta[1])){
     beta.name             <- dimnames(data[[names(data)[[1]]]]$X_ts)[[1]]
     X_CuSum               <- XYXi_CuSum <- 0
     E_inverse_sigma.sq    <- NULL
-    # Yts <- data.trans.tsv$tsv.y
     for(py in 1:Py){
       E_inverse_sigma.sq <- c(E_inverse_sigma.sq, rep(1/Para.List[[names(data)[[py]]]]$obs.sigma.sq$mu.sigma.sq, data[[names(data)[[py]]]]$n))
       if(!is.null(data[[names(data)[[py]]]]$sX_ts)){
@@ -75,9 +83,7 @@
 
   if(!is.null(data[[names(data)[[1]]]]$X_ts)){
     post_betaX_sigma.sq <- solve(X_CuSum + solve(Sigma.alpha))
-    # if(var.select){eta <- XYXi_CuSum}else{
-     eta <- XYXi_CuSum + solve(Sigma.alpha) %*% prior[[names(data)[[1]]]]$beta$mu.beta
-    # }
+    eta <- XYXi_CuSum + solve(Sigma.alpha) %*% prior[[names(data)[[1]]]]$beta$mu.beta
     post_betaX_mu <- MASS::mvrnorm(1, mu    = post_betaX_sigma.sq %*% eta %>% as.vector(), Sigma = post_betaX_sigma.sq)
 
 
@@ -307,7 +313,6 @@
 
             assign("G", data[[py]]$Grid.infor$level[[g]]$BAUs.Dist, envir = .GlobalEnv)
 
-            assign("Adj.Mat.0",  data[[names(data)[[py]]]]$Grid.infor$level[[g]]$Adj.Mat, envir = .GlobalEnv)
 
             assign("var.dist", data[[py]]$Grid.infor$level[[g]]$var.dist, envir = .GlobalEnv)
             assign("mu.Phi.v", Para.List[[names(data)[py]]]$st.sRF[[sub.rf.name]]$Phi.v$mu.Phi.v, envir = .GlobalEnv)

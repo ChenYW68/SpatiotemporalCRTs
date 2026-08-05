@@ -1,4 +1,5 @@
 source("./LoadPackages/RDependPackages.R")
+Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
 library(MASS)  # For multivariate normal simulation
 library(fields)  # For visualization
 load("./data/Kenya_Score_Data_r.RData")

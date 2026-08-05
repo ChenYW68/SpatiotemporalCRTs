@@ -1,7 +1,7 @@
-# install.packages("./LoadPackages//HDCM_1.0.zip", repos = NULL, type = "win.binary")
 rm(list = ls())
 #-----------------------------------------
 source("./LoadPackages/RDependPackages.R")
+Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
 source(normalizePath("./JSTVC/R/regCreateGridm.R"))
 source(normalizePath("./JSTVC/R/Partitioning.Datasets.R"))
 source(normalizePath("./JSTVC/R/Construct.Fixed.effect.Data.R"))
@@ -218,7 +218,6 @@ for(i in 1:50){
       R.sqrt          = 0,
       site.id         = "Village_ID",
       ch              = 50,
-      method          = "Wenland",
       H.Grid_dist     = if(r <= 3) Kenya.Dist.c[Ken_indices[[r]], Ken_indices[[r]]] else Tanzania.Dist.c[Tan_indices[[r - 3]], Tan_indices[[r - 3]]],
       var.covariable  = Var.variables[, -1]
     )
@@ -342,10 +341,8 @@ for(i in 1:50){
           left_join(JSTVC.Pred.sd, by = c("Village_ID", "Year")) %>%
           left_join(Da.test[, c(1, 2, 45:52)], by = c("Village_ID", "Year"))
   temp$fold <- i
-  HDCM::spT_validation()
+  spT_validation()
 
-
-  library(HDCM)
   JSTVC.spT <- spT_validation(z       = temp$true.Prevalence,
                              zhat     = temp$pred.JSTVC,
                              zhat.Ens = NULL,
@@ -465,7 +462,6 @@ for(i in 1:50){
       R.sqrt          = 0,
       site.id         = "Village_ID",
       ch              = 50,
-      method          = "Wenland",
       H.Grid_dist     = if(r <= 3) Kenya.Dist.c[Ken_indices[[r]], Ken_indices[[r]]] else Tanzania.Dist.c[Tan_indices[[r - 3]], Tan_indices[[r - 3]]],
       var.covariable  = Var.variables[, -1]
     )

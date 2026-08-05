@@ -1,6 +1,7 @@
 rm(list = ls())
 #-----------------------------------------
 source("./LoadPackages/RDependPackages.R")
+Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
 source(normalizePath("./JSTVC/R/util.R"))
 #-----------------------------------------
 root.table <- "./result/summary"
@@ -15,10 +16,10 @@ save.Tab.from2   <- "./result/Simulation_300/misspecified_x_random_JSTVC_IE_n_25
 save.Tab.to <- paste0(root.table, "/misspecified_x_all_250.xlsx")
 
 
-Competing.method <- readxl::read_xlsx(paste0(root.table, "/misspecified_x_competing_methods_298.xlsx"))
-save.Tab.from1   <- "./result/Simulation_300/misspecified_x_random_JSTVC_n_250_Ne_300/"
-save.Tab.from2   <- "./result/Simulation_300/misspecified_x_random_JSTVC_IE_n_250_Ne_300/"
-save.Tab.to <- paste0(root.table, "/misspecified_x_all_298.xlsx")
+# Competing.method <- readxl::read_xlsx(paste0(root.table, "/misspecified_x_competing_methods_298.xlsx"))
+# save.Tab.from1   <- "./result/Simulation_300/misspecified_x_random_JSTVC_n_298_Ne_300/"
+# save.Tab.from2   <- "./result/Simulation_300/misspecified_x_random_JSTVC_IE_n_298_Ne_300/"
+# save.Tab.to <- paste0(root.table, "/misspecified_x_all_298.xlsx")
 
 #-----------------------------------------
 #-----------------------------------------
@@ -121,13 +122,12 @@ SD   <- create_wide_table(Competing.method, JSTVC_ie= JSTVC_ie, JSTVC, metric = 
 MSE  <- create_wide_table(Competing.method, JSTVC_ie= JSTVC_ie, JSTVC, metric = "MSE", models = models, digits = 5)
 EC   <- create_wide_table(Competing.method, JSTVC_ie= JSTVC_ie, JSTVC, metric = "EC",  models = models, digits = 2, Opt = F)
 
+colnames(Bias) <- colnames(SD) <- colnames(MSE) <- colnames(EC) <-
+c("Metric", "Model", "alpha_0",
+  paste0("alpha_1", 1:4), paste0("alpha_2", 1:4),
+  "gamma_1", "gamma_2")
 
-
-# writexl::write_xlsx(EC, path = "./Result/EC2.xlsx")
-
+writexl::write_xlsx(EC, path = "./Result/EC2.xlsx")
 writexl::write_xlsx(rbind(Bias, SD, MSE), path = save.Tab.to)
-# Table1
-# Bias
-# SD
-# MSE
+
 

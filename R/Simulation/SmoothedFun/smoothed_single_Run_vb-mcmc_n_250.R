@@ -1,9 +1,10 @@
-rm(list = ls())
+# rm(list = ls())
 #-----------------------------------------
 # running VB using "TRUE"; MCMC using FALSE
-MCMC     <- FALSE
+# MCMC     <- FALSE
 #-----------------------------------------
 source("./LoadPackages/RDependPackages.R")
+Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
 source(normalizePath("./JSTVC/R/regCreateGridm.R"))
 source(normalizePath("./JSTVC/R/Partitioning.Datasets.R"))
 source(normalizePath("./JSTVC/R/Construct.Fixed.effect.Data.R"))
@@ -129,7 +130,6 @@ for(r in 1:length(region_flags)) {
     R.sqrt          = 0,
     site.id         = "Village_ID",
     ch              = 50,
-    method          = "Wenland",
     H.Grid_dist     = if(r <= 3) Kenya.Dist.c[Ken_indices[[r]], Ken_indices[[r]]] else Tanzania.Dist.c[Tan_indices[[r - 3]], Tan_indices[[r - 3]]],
     var.covariable  = Var.variables[, -1]
   )

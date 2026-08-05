@@ -1,6 +1,7 @@
 rm(list = ls())
 #-----------------------------------------
 source("./LoadPackages/RDependPackages.R")
+Rcpp::sourceCpp("./JSTVC/src/util_c.cpp")
 source(normalizePath("./JSTVC/R/regCreateGridm.R"))
 source(normalizePath("./JSTVC/R/Partitioning.Datasets.R"))
 source(normalizePath("./JSTVC/R/Construct.Fixed.effect.Data.R"))
@@ -39,7 +40,7 @@ Score_Data$true.Prevalence <- Score_Data$Prevalence
 Score_Data      <- Score_Data %>% left_join(date.time, by = c("Year"))
 setDT(Site)
 #-----------------------------------------
-# Beta estimation per region
+# Delta pre-estimation per region
 #-----------------------------------------
 Beta.list    <- vector("list", length(region_flags))
 G.basic.data <- vector("list", length(region_flags))
@@ -73,7 +74,6 @@ for(r in 1:length(region_flags)) {
     R.sqrt          = 0,
     site.id         = "Village_ID",
     ch              = 50,
-    method          = "Wenland",
     H.Grid_dist     = Kenya.Dist.c[Ken_indices[[r]], Ken_indices[[r]]],
     var.covariable  = Var.variables[, -1])
 }
