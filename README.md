@@ -38,15 +38,6 @@ The `./data` directory contains the following files.
 
 ### A.1 Using `Tanzania_Score_Data_r.RData` as an illustration
 
-#### Objects in the file
-
-| Object | Class | Description |
-| --- | --- | --- | --- |
-| `Tanzania_Score_Data` | `data.table`, `data.frame` | Main Tanzania SCORE longitudinal trial data |
-| `Site` | `data.frame` |  Village/site summary information for Tanzania |
-| `Tanzania.Dist.c` | `matrix`, `array` | Pairwise village distance matrix |
-| `G.mat` | `matrix`, `array` | Adjacency matrix generated during preprocessing |
-
 #### Data frames and variables
 
 `Tanzania_Score_Data` (745 x 42)
