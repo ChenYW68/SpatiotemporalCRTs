@@ -158,7 +158,7 @@ All real data analysis code is located in the `./R/Case/` directory.
 
 
 ## Spatiotemporal patterns of schistosomiasis
-Figure 1 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis, i.e.,
+Figure 1 illustrates the influence of treatment effects and spatiotemporal random effects on schistosomiasis prevalence, i.e.,
 <figure id="Figure4">
   <p align="center">
   <img src="./figure/Fig7_Kenya_Wts.jpg" width="800px">
