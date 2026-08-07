@@ -38,10 +38,7 @@ The `./data` directory contains the following files.
 
 ### A.1 Using `Tanzania_Score_Data_r.RData` as an illustration
 
-#### Data frames and variables
-
-`Tanzania_Score_Data` (745 x 42)
-
+Variables are as follows:
 <table>
   <colgroup>
     <col style="width: 30%;">
