@@ -17,7 +17,7 @@ Motivated by the need to identify optimal treatment regimens in the Schistosomia
 To support scalable inference under complex dependent structures, we develop a scable Variational Bayes algorithm with an ensemble-based correction to improve uncertainty quantification. The proposed methodology provides a broadly applicable framework for modeling complex dependencies in randomized experiments, especially in those involving multiple sequential interventions.
 
 
-# Code and Data Documentation for "Identifying Optimal Schistosomiasis Treatment Sequences for Mass Drug Administration Using Direct and Indirect Effects in Spatiotemporal Trials"
+# Code and Data Documentation
 
 To reproduce all results presented in the paper, run `./Main.R`. Depending on the computing environment, the script may take a considerable amount of time to complete.
 
