@@ -51,83 +51,91 @@ The `./data` directory contains the following files.
 
 `Tanzania_Score_Data` (745 x 42)
 
-```{=latex}
-\begingroup
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{longtable}{p{0.05\textwidth} p{0.4\textwidth} p{0.6\textwidth}}
-\hline
-\# & Variables & Description \\
-\hline
-1 & \texttt{Village\_ID} & Village identifier \\
-2 & \texttt{Year} & Observation year \\
-3 & \texttt{Prevalence} & Observed infection prevalence \\
-4 & \texttt{Study\_Type} & Study or trial type label \\
-5 & \texttt{Study\_Arm} & Assigned treatment arm \\
-6 & \texttt{Latitude} & Village latitude \\
-7 & \texttt{Longitude} & Village longitude \\
-8 & \texttt{flag} & Region or geographic grouping label \\
-9 & \texttt{CWT\_1} & Indicator for CWT at time lag 1 \\
-10 & \texttt{CWT\_2} & Indicator for CWT at time lag 2 \\
-11 & \texttt{CWT\_3} & Indicator for CWT at time lag 3 \\
-12 & \texttt{CWT\_4} & Indicator for CWT at time lag 4 \\
-13 & \texttt{SBT\_1} & Indicator for SBT at time lag 1 \\
-14 & \texttt{SBT\_2} & Indicator for SBT at time lag 2 \\
-15 & \texttt{SBT\_3} & Indicator for SBT at time lag 3 \\
-16 & \texttt{SBT\_4} & Indicator for SBT at time lag 4 \\
-17 & \texttt{CWT} & Current CWT indicator \\
-18 & \texttt{SBT} & Current SBT indicator \\
-19 & \texttt{IEt.CWT} & Pow decay temporal variable for CWT \\
-20 & \texttt{IEt.SBT} & Pow decay temporal variable for SBT \\
-21 & \texttt{IEt.CWT.exp} & Exponential-decay temporal variable for CWT \\
-22 & \texttt{IEt.SBT.exp} & Exponential-decay temporal variable for SBT \\
-23 & \texttt{sCWT\_1} & Smoothed or scaled CWT summary at lag 1 \\
-24 & \texttt{sCWT\_2} & Smoothed or scaled CWT summary at lag 2 \\
-25 & \texttt{sCWT\_3} & Smoothed or scaled CWT summary at lag 3 \\
-26 & \texttt{sSBT\_1} & Smoothed or scaled SBT summary at lag 1 \\
-27 & \texttt{sSBT\_2} & Smoothed or scaled SBT summary at lag 2 \\
-28 & \texttt{sSBT\_3} & Smoothed or scaled SBT summary at lag 3 \\
-29 & \texttt{IEs.No\_Treatment} & Spatial indirect-effect summary under no treatment \\
-30 & \texttt{IEs.CWT.sp.Neigh.500.10} & Spatial IE for CWT using 10-km as a range and a 500-km cut-off \\
-31 & \texttt{IEs.SBT.sp.Neigh.500.10} & Spatial IE for SBT using 10-km as a range and a 500-km cut-off \\
-32 & \texttt{IEs.No\_Treatment.sp.Neigh.500.10} & Spatial IE for no treatment using 10-km as a range and a 500-km cut-off \\
-33 & \texttt{IEs.CWT.sp.Neigh.500.30} & Spatial IE for CWT using 30-km as a range and a 500-km cut-off \\
-34 & \texttt{IEs.SBT.sp.Neigh.500.30} & Spatial IE for SBT using 30-km as a range and a 500-km cut-off \\
-35 & \texttt{IEs.No\_Treatment.sp.Neigh.500.30} & Spatial IE for no treatment using 30-km as a range and a 500-km cut-off \\
-36 & \texttt{IEs.CWT.sp.Neigh.500.50} & Spatial IE for CWT using 50-km as a range and a 500-km cut-off \\
-37 & \texttt{IEs.SBT.sp.Neigh.500.50} & Spatial IE for SBT using 50-km as a range and a 500-km cut-off \\
-38 & \texttt{IEs.No\_Treatment.sp.Neigh.500.50} & Spatial IE for no treatment using 50-km as a range and a 500-km cut-off \\
-39 & \texttt{distances} & Distance to Lake Victoria \\
-40 & \texttt{log.log.mean.Intensity} & Mean of log-log transformed infection intensity \\
-41 & \texttt{log.log.var.Intensity} & Variance of log-log transformed infection intensity \\
-42 & \texttt{Intercept} & Intercept term used in model construction \\
-\hline
-\end{longtable}
-\endgroup
-```
+<table>
+  <colgroup>
+    <col style="width: 30%;">
+    <col style="width: 30%;">
+    <col style="width: 40%;">
+  </colgroup>
+  <thead>
+    <tr>
+      <th style="font-size: 20%;">No.</th>
+      <th>Variables</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td><code>Village_ID</code></td><td>Village identifier</td></tr>
+    <tr><td>2</td><td><code>Year</code></td><td>Observation year</td></tr>
+    <tr><td>3</td><td><code>Prevalence</code></td><td>Observed infection prevalence</td></tr>
+    <tr><td>4</td><td><code>Study_Type</code></td><td>Study or trial type label</td></tr>
+    <tr><td>5</td><td><code>Study_Arm</code></td><td>Assigned treatment arm</td></tr>
+    <tr><td>6</td><td><code>Latitude</code></td><td>Village latitude</td></tr>
+    <tr><td>7</td><td><code>Longitude</code></td><td>Village longitude</td></tr>
+    <tr><td>8</td><td><code>flag</code></td><td>Region or geographic grouping label</td></tr>
+    <tr><td>9</td><td><code>CWT_1</code></td><td>Indicator for CWT at time lag 1</td></tr>
+    <tr><td>10</td><td><code>CWT_2</code></td><td>Indicator for CWT at time lag 2</td></tr>
+    <tr><td>11</td><td><code>CWT_3</code></td><td>Indicator for CWT at time lag 3</td></tr>
+    <tr><td>12</td><td><code>CWT_4</code></td><td>Indicator for CWT at time lag 4</td></tr>
+    <tr><td>13</td><td><code>SBT_1</code></td><td>Indicator for SBT at time lag 1</td></tr>
+    <tr><td>14</td><td><code>SBT_2</code></td><td>Indicator for SBT at time lag 2</td></tr>
+    <tr><td>15</td><td><code>SBT_3</code></td><td>Indicator for SBT at time lag 3</td></tr>
+    <tr><td>16</td><td><code>SBT_4</code></td><td>Indicator for SBT at time lag 4</td></tr>
+    <tr><td>17</td><td><code>CWT</code></td><td>Current CWT indicator</td></tr>
+    <tr><td>18</td><td><code>SBT</code></td><td>Current SBT indicator</td></tr>
+    <tr><td>19</td><td><code>IEt.CWT</code></td><td>Pow decay temporal variable for CWT</td></tr>
+    <tr><td>20</td><td><code>IEt.SBT</code></td><td>Pow decay temporal variable for SBT</td></tr>
+    <tr><td>21</td><td><code>IEt.CWT.exp</code></td><td>Exponential-decay temporal variable for CWT</td></tr>
+    <tr><td>22</td><td><code>IEt.SBT.exp</code></td><td>Exponential-decay temporal variable for SBT</td></tr>
+    <tr><td>23</td><td><code>sCWT_1</code></td><td>Smoothed or scaled CWT summary at lag 1</td></tr>
+    <tr><td>24</td><td><code>sCWT_2</code></td><td>Smoothed or scaled CWT summary at lag 2</td></tr>
+    <tr><td>25</td><td><code>sCWT_3</code></td><td>Smoothed or scaled CWT summary at lag 3</td></tr>
+    <tr><td>26</td><td><code>sSBT_1</code></td><td>Smoothed or scaled SBT summary at lag 1</td></tr>
+    <tr><td>27</td><td><code>sSBT_2</code></td><td>Smoothed or scaled SBT summary at lag 2</td></tr>
+    <tr><td>28</td><td><code>sSBT_3</code></td><td>Smoothed or scaled SBT summary at lag 3</td></tr>
+    <tr><td>29</td><td><code>IEs.No_Treatment</code></td><td>Spatial indirect-effect summary under no treatment</td></tr>
+    <tr><td>30</td><td><code>IEs.CWT.sp.Neigh.500.10</code></td><td>Spatial IE for CWT using 10-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>31</td><td><code>IEs.SBT.sp.Neigh.500.10</code></td><td>Spatial IE for SBT using 10-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>32</td><td><code>IEs.No_Treatment.sp.Neigh.500.10</code></td><td>Spatial IE for no treatment using 10-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>33</td><td><code>IEs.CWT.sp.Neigh.500.30</code></td><td>Spatial IE for CWT using 30-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>34</td><td><code>IEs.SBT.sp.Neigh.500.30</code></td><td>Spatial IE for SBT using 30-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>35</td><td><code>IEs.No_Treatment.sp.Neigh.500.30</code></td><td>Spatial IE for no treatment using 30-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>36</td><td><code>IEs.CWT.sp.Neigh.500.50</code></td><td>Spatial IE for CWT using 50-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>37</td><td><code>IEs.SBT.sp.Neigh.500.50</code></td><td>Spatial IE for SBT using 50-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>38</td><td><code>IEs.No_Treatment.sp.Neigh.500.50</code></td><td>Spatial IE for no treatment using 50-km as a range and a 500-km cut-off</td></tr>
+    <tr><td>39</td><td><code>distances</code></td><td>Distance to Lake Victoria</td></tr>
+    <tr><td>40</td><td><code>log.log.mean.Intensity</code></td><td>Mean of Log-log transformed infection intensity</td></tr>
+    <tr><td>41</td><td><code>log.log.var.Intensity</code></td><td>Variance of log-log transformed infection intensity</td></tr>
+    <tr><td>42</td><td><code>Intercept</code></td><td>Intercept term used in model construction</td></tr>
+  </tbody>
+</table>
 
 `Site` (149 x 8)
 
-```{=latex}
-\begingroup
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{longtable}{p{0.05\textwidth} p{0.24\textwidth} p{0.62\textwidth}}
-\hline
-\# & Variables & Description \\
-\hline
-1 & \texttt{Village\_ID} & Village identifier \\
-2 & \texttt{Study\_Arm} & Assigned treatment arm \\
-3 & \texttt{LAT} & Latitude \\
-4 & \texttt{LON} & Longitude \\
-5 & \texttt{flag} & Region or geographic grouping label \\
-6 & \texttt{LON\_X} & Projected longitude coordinate \\
-7 & \texttt{LAT\_Y} & Projected latitude coordinate \\
-8 & \texttt{distances} & Distance to Lake Victoria \\
-\hline
-\end{longtable}
-\endgroup
-```
+<table>
+  <colgroup>
+    <col style="width: 7%;">
+    <col style="width: 23%;">
+    <col style="width: 70%;">
+  </colgroup>
+  <thead>
+    <tr>
+      <th style="font-size: 90%;">No.</th>
+      <th>Variables</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td><code>Village_ID</code></td><td>Village identifier</td></tr>
+    <tr><td>2</td><td><code>Study_Arm</code></td><td>Assigned treatment arm</td></tr>
+    <tr><td>3</td><td><code>LAT</code></td><td>Latitude</td></tr>
+    <tr><td>4</td><td><code>LON</code></td><td>Longitude</td></tr>
+    <tr><td>5</td><td><code>flag</code></td><td>Region or geographic grouping label</td></tr>
+    <tr><td>6</td><td><code>LON_X</code></td><td>Projected longitude coordinate</td></tr>
+    <tr><td>7</td><td><code>LAT_Y</code></td><td>Projected latitude coordinate</td></tr>
+    <tr><td>8</td><td><code>distances</code></td><td>Distance to Lake Victoria</td></tr>
+  </tbody>
+</table>
 
 ## B. Code for JSTVC
 
