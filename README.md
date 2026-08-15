@@ -164,7 +164,7 @@ Figure 1 illustrates the influence of treatment effects and spatiotemporal rando
   <img src="./figure/Fig7_Kenya_Wts.jpg" width="800px">
     </p>
   <figcaption>
-  <strong>Figure 1:</strong> Recovered spatiotemporal patterns of the different components. Top panel: Observed prevalence. Middle panel: Prevalence excluding direct and indirect effects. Bottom panel: Recovered spatiotemporal random effects.
+  <strong>Figure 1:</strong> Recovered spatiotemporal patterns of the different components. Top panel: Observed prevalence. Middle panel: Treatment effects. Bottom panel: Recovered spatiotemporal random effects.
   </figcaption>
 </figure>
 
